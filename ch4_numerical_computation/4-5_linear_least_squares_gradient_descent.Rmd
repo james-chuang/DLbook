@@ -1,0 +1,122 @@
+---
+output:
+  html_document:
+    fig_width: 8
+    css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
+---
+
+#linear least squares by gradient descent
+
+Squared error loss function:
+$$
+\begin{align}
+f(\mathbf{x}) & = \lVert \mathbf{Ax} - \mathbf{b} \rVert_2^2 \\
+f(\mathbf{x}) & = \left(\mathbf{Ax} - \mathbf{b} \right)^T \left(\mathbf{Ax} - \mathbf{b} \right) \\
+\end{align}
+$$
+In order to minimize $f(\mathbf{x})$, we find the gradient:
+$$
+\begin{align}
+\nabla_{\mathbf{x}}f(\mathbf{x}) & = \mathbf{A}^T(\mathbf{Ax}-\mathbf{b}) \\
+\nabla_{\mathbf{x}}f(\mathbf{x}) & = \mathbf{A}^T\mathbf{Ax}-\mathbf{A}^T\mathbf{b}
+\end{align}
+$$
+
+Pseudocode for minimization of $f(\mathbf{x})$ by gradient descent:
+
+Set the step size ($\epsilon$) and tolerance $\delta$ to small, positive numbers.
+**while** $\lVert \mathbf{A}^T\mathbf{Ax}-\mathbf{A}^T\mathbf{b} \rVert_2 > \delta$:
+$\mathbf{x} \gets \mathbf{x}- \epsilon(\mathbf{A}^T\mathbf{Ax}-\mathbf{A}^T\mathbf{b})$
+
+```{r}
+library(tibble)
+library(ggplot2)
+library(viridis)
+
+set.seed(1)
+
+generate.data = function(N, slope, intercept, mean, sd){
+  # randomly pick N x-values uniformly distributed from 1 to 10
+  X = matrix(runif(n=N, min=0, max=10))   
+  
+  # generate y-values for each x, with Gaussian noise
+  Y = matrix((intercept+slope*X) + rnorm(n=N, mean = mean, sd = sd)) 
+  
+  return(cbind(X,Y))
+}
+
+data = generate.data(N=50, slope=2, intercept=10, mean=0, sd=3)
+N = nrow(data)
+A = cbind(rep(1,N), data[,1])
+b = data[,2]
+
+eps = .001
+delta = .5
+#x = c(runif(n=1, min=8, max=10), runif(n=1, min=1, max=3))
+x = c(8,0.5)
+
+error = function(A,x,b){
+  return(norm(t(A) %*% A %*% x - t(A) %*% b, type="2"))
+}
+
+grad.desc.data = data_frame(epoch=numeric(), x.old=double(), y.old=double(), x.new=double(), y.new=double(), error.old=double(), error.new=double())
+
+epoch = 1
+err = error(A,x,b)
+
+while (err>delta){
+  #print(paste("epoch: ", epoch, "; error: ", round(err, digits=6), "x: ", round(x[1], digits=3), ",",round(x[2], digits=3)))
+  
+  grad.desc.data[epoch,1] = epoch
+  grad.desc.data[epoch,2] = x[1]
+  grad.desc.data[epoch,3] = x[2]
+  grad.desc.data[epoch,6] = err
+  
+  x = x-eps*(t(A) %*% A %*% x - t(A) %*% b)
+  
+  grad.desc.data[epoch,4] = x[1]
+  grad.desc.data[epoch,5] = x[2]
+  err = error(A,x,b)
+  grad.desc.data[epoch,7] = err
+  epoch = epoch+1
+}
+grad.desc.data$odd = ifelse(grad.desc.data$epoch%%2==0, "EVEN", "ODD")
+```
+
+
+```{r, fig.align='center'}
+#Set data range for plotting
+xmin = round(min(grad.desc.data$x.old), digits=1)-1
+xmax = round(max(grad.desc.data$x.old), digits=1)+1
+ymin = round(min(grad.desc.data$y.old), digits=1)-1
+ymax = round(max(grad.desc.data$y.old), digits=1)+1
+
+xrange = seq(from=xmin, to=xmax, by=0.1)
+yrange = seq(from=ymin, to=ymax, by=0.1)
+
+grid = as.matrix(expand.grid(xrange, yrange))
+k = dim(grid)[1]
+
+b.broadcast = b %*% t(rep(1, k))
+
+error.vector = diag(t(b.broadcast-A%*%t(grid)) %*% (b.broadcast-A%*%t(grid)))
+grid.error = as_data_frame(cbind(grid, error.vector))
+
+lm.fit = lm(b~data[,1])
+x.lm = as_data_frame(t(as.matrix(coef(lm.fit))))
+names(x.lm) = c("V1","V2")
+
+(error.plot = ggplot() +
+        geom_raster(data = grid.error, aes(x=Var1, y=Var2, fill=error.vector), interpolate = TRUE) +
+        geom_contour(data = grid.error, aes(x=Var1, y=Var2, z=error.vector), color="white") +
+        geom_point(data = x.lm, aes(x=V1, y=V2), shape=4, color="white") +
+        geom_segment(data = grad.desc.data, aes(x=x.old, y=y.old, xend=x.new, yend=y.new, color=odd)) +
+        scale_fill_viridis()) +
+        scale_color_manual(values = c("yellow","yellow"))
+
+lm.plot = ggplot() +
+            geom_point(data=data.frame(data), aes(x=X1, y=X2)) +
+            geom_abline(slope=2, intercept=10) + #generating line
+            geom_smooth(data=data.frame(data), aes(x=X1, y=X2), method = lm) + #least squares analytical soln
+            geom_abline(slope=9, intercept=1, color="red")  #
+```
