@@ -5,8 +5,6 @@ output:
     css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
 ---
 
-#linear least squares by gradient descent
-
 In this post I explore the gradient descent algorithm as a solution to least squares minimization, inspired by section 4.5 of the [Deep Learning Book](http://www.deeplearningbook.org/).
 
 Suppose we want to find the value of $\mathbf{x}$ that minimizes the squared error loss function $f(\mathbf{x})$.
@@ -100,7 +98,7 @@ grad.desc = function(A, b, eps, delta, x){
   return(grad.desc.data)
 }
 
-grad.desc.data = grad.desc(A, b, eps=.001, delta=.5, x=c(8,0.5))
+grad.desc.data = grad.desc(A, b, eps=.001, delta=.1, x=c(8,0.5))
 ```
 
 Now some plotting to look closer at what happened:
@@ -154,3 +152,22 @@ Above, we see gradient descent in action as plotted in parameter space, where th
 )
 ```
 Above is what the line represented by the slope and intercept looks like through iterations of gradient descent. As the algorithm progresses (indicated by the progression of black to yellow), the line gets closer and closer to the optimal line.
+
+In the above example, we see that gradient descent wastes time crossing the 'valley' in error space rather than going towards the optimal solution because going down the valley is the steepest direction. One way to improve this is to decrease the step size. Here's what gradient descent with a step size of $\epsilon=.0005$ (half the previous step size) looks like in parameter space:
+```{r, echo=FALSE, fig.align='center', warning=FALSE}
+grad.desc.data.2 = grad.desc(A, b, eps=.0006, delta=.1, x=c(8,0.5))
+
+(error.plot.2 = ggplot() +
+        geom_raster(data= grid.error, aes(x=Var1, y=Var2, fill=error.vector), interpolate = TRUE) +
+        geom_contour(data= grid.error, aes(x=Var1, y=Var2, z=error.vector), color="white") +
+        geom_point(data= x.lm, aes(x=V1, y=V2), shape=4, color="white") +
+        geom_segment(data= grad.desc.data.2, aes(x=x.old, y=y.old, xend=x.new, yend=y.new, color=even.odd)) +
+        scale_x_continuous(limits = c(7.75,10.5)) +
+        scale_fill_viridis() +
+        scale_color_manual(values = c("orange","yellow")) +
+        xlab("X_1: intercept") + ylab("X_2: slope") +
+        annotate("label",x=8,y=0.3, label="initial guess") +
+        annotate("label",x=10.15,y=1.7, label="optimal solution")
+)
+```
+Now the initial steps are not large enough to reach the other side of the 'valley', so less time is spent repeatedly crossing the valley. However, the initial steps are still limited by the fact that gradient descent only goes in the direction of steepest descent, which in this case is perpendicular in parameter space to the optimal solution. This can be avoided by taking into account information about the curvature of the function, i.e. its second derivatives which are contained in the Hessian matrix. Algorithms which take the Hessian into account are known as second-order optimization algorithms, while the algorithm used here only uses the information in the gradient, making it a first-order optimization algorithm.
