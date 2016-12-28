@@ -1,0 +1,139 @@
+---
+output:
+  html_document:
+    toc: TRUE
+    fig_width: 4.5
+    css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Notes on chapter 5 of the [Deep Learning Book](www.deeplearningbook.org) on Machine Learning Basics.
+
+Machine learning: a form of applied statistics with increased emphasis on the use of computers to statistically estimate complicated functions and a decreased emphasis on proving confidence intervals around these functions.
+
+## **5.1 Learning Algorithms**
+> "A computer program is said to learn from experience $E$ with respect to some class of tasks $T$ and performance measure $P$, if its performance at tasks in $T$, as measured by $P$, improves with experience $E$."
+
+### **5.1.1 The Task, $T$**
+Learning is *not* the task. Learning is the means of attaining the ability to perform the task. E.g., in training a robot to walk, the task is walking. This could be accomplished by writing a program specifying how to walk, or by programming the robot to learn how to walk.
+
+ML tasks are usually described in how the system should process an ***example***- a collection of ***features*** that have been quantitatively measured from some object or event that we want the system to process. An example is typically represented as a vector $\mathbf{x} \in \mathbb{R}^n$, where each entry $x_i$ of the vector is another feature.
+
+Common ML tasks:
+
+  - Classification
+  - Classification with missing inputs
+  - Regression
+  - Transcription: unstructured data representation $\rightarrow$ discrete, textual form
+  - Machine translation
+  - Structured output: any task where the output is a vector with important relationships between the different elements, e.g. parsing-- mapping a natural language sentence into a tree describing its grammatical structure, and tagging nodes of the trees as being verbs, nouns, adverbs, etc.
+  - Anomaly detection
+  - Synthesis and sampling: generate new examples similar to the training set
+  - Imputation of missing values
+  - Denoising: predict a clean example $\mathbf{x} \in \mathbb{R}^n$ from a corrupted example $\tilde{\mathbf{x}} \in \mathbb{R}^n$
+  - Density estimation/ probability mass function estimation
+
+### **5.1.2 The Performance Measure, $P$**
+To evaluate a ML algorithm, need a quantitative measure of its performance. Usually this performance measure $P$ is specific to the task $T$ being carried out by the system.
+
+For classification, classification with missing inputs, transcription tasks, we often use the ***accuracy*** of the model-- the proportion of examples for which the model produces the correct output, or the ***error rate***-- the proportion of examples for which the model produces an incorrect output. The error rate is the expected 0-1 loss, i.e. it is 0 for a correctly classified example and 1 otherwise.
+
+For other tasks such as density estimation, 0-1 loss doesn't make sense. Instead, we use a performance metric that gives the model a continuous-valued score for each example, most commonly the average log-probability the model assigns to some examples.
+
+Performance measured must be measured on a ***test set*** of data that the model has not been trained in order to tell how well the model generalizes.
+
+### **5.1.3 The Experience, $E$**
+ML algorithms-- unsupervised or supervised depending on what kind of experience they are allowed to have during learning.
+
+Most learning algorithms experience an entire ***dataset***-- a collection of many examples, aka ***data points***.
+
+***Unsupervised learning***-- experience a dataset containing many features, and learn useful properties of the structure of the dataset. (Learn $p(\mathbf{x})$ by observing examples of $\mathbf{x}$).
+
+***Supervised learning***-- experience a dataset containing features, where each example has a ***label*** or ***target***. (Learn to predict $\mathbf{y}$ from $\mathbf{x}$, usually by estimating $p(\mathbf{y} \mid \mathbf{x})$ from several examples of $\mathbf{x}$ and $\mathbf{y}$).
+
+Unsupervised learning/supervised learning are not formally defined or completely separate. From the chain rule of probability:
+$$
+\forall \mathbf{x} \in \mathbb{R}^n, \quad p(\mathbb{x}) = \prod_{i=1}^{n} p(x_i \mid x_1, \dots, x_{i-1})
+$$
+, meaning that the unsupervised problem of modeling $p(\mathbf{x})$ could be split into $n$ supervised learning problems. Alternatively the supervised learning problem of learning $p(y \mid \mathbf{x})$ could be solved using unsupervised learning to learn the joint distribution $p(\mathbf{x}, y)$ and inferring:
+$$
+p(y \mid \mathbf{x}) = \frac{p(\mathbf{x},y)}{\sum_{y^\prime}p(\mathbf{x}, y^\prime)}
+$$
+
+Some ML algorithms do not just experience a fixed dataset. E.g. ***reinforcement learning*** algorithms interact with an environment, with feedback between the learning system and its experiences (not covered in this book).
+
+Datasets can be commonly described with a ***design matrix*** $\mathbf{X}$, where rows are examples and columns are features. However, this only works for data where each example can be described as a vector of the same size. In supervised learning, the design matrix is paired with a vector of labels $\mathbf{y}$.
+
+## **5.2 Capacity, Overfitting and Underfitting**
+What separates machine learning from optimization is that we want the ***generalization/test error*** to be low, not just the training error. Generalization error-- the expected value of the error on a new input, where the expectation is across different possible inputs drawn from the distribution of inputs we expect the system to encounter in practice.
+
+To affect test set performance while only observing the training set, need to make some assumptions about how the training and test sets are collected in order to apply statistical learning theory.
+
+The train and test data are generated by a probability distribution over datasets-- the ***data generating process***. We make a set of assumptions known as the ***i.i.d assumptions***: The examples in each dataset are *independent* from each other, and the train and test set are *identically distributed*, i.e. dawn from the same probability distribution as each other. The same underlying distribution, known as the ***data generating distribution*** $p_{\text{data}}$, generates every train and test example.
+
+In using a ML algorithm, we sample the training set, use it to choose parameters to reduce training set error, then sample the test set. Under this process, expected test error $\geq$ expected training error. Factors determining how well a ML algorithm will perform are its ability to:
+
+  - make the training error small
+  - make the gap between training and test error small
+  
+***Underfitting***-- when a model is unable to obtain a sufficiently low training error
+***Overfitting***-- when the gap between training and test error is too large
+
+Under- vs. overfitting is controlled by a model's ***capacity*** (flexibility/degrees of freedom, etc.). ML algorithms generally perform best when their capacity is appropriate for the true complexity of the task they need to perform and the amount of training data provided.
+
+***Representational capacity***-- determined by the family of functions to choose from when varying parameters
+***Effective capacity***-- the actual capacity of the algorithm, limited by the imperfection of optimization
+
+The most well-known means of quantifying model capacity is the ***Vapnik-Chervonenkis dimension***, or VC dimension. The VC dimension measures the capacity of a binary classifier, and is defined as being the largest possible value of $m$ for which there exists a training set of $m$ different $\mathbf{x}$ points that the classifier can label arbitrarily.
+
+## **5.5 Maximum Likelihood Estimation**
+Consider a set of $m$ examples $\mathbb{X} = \left\{\mathbf{x}^{(1)}, \dots, \mathbf{x}^{(m)} \right\}$ drawn independently from the true but unknown data generating distribution $p_{\text{data}}(\mathbf{x})$.
+
+Let $p_{\text{model}}(\mathbf{x}; \mathbf{\theta})$ be a parametric family of probability distributions over the same space as $p_{\text{data}}(\mathbf{x})$, indexed by $\mathbf{\theta}$. In other words, $p_{\text{model}}(\mathbf{x}; \mathbf{\theta})$ maps any configuration $\mathbf{x}$ to a real number estimating the true probability $p_{\text{data}}(\mathbf{x})$.
+
+The maximum likelihood estimator for $\mathbf{\theta}$ is then defined as:
+$$
+\begin{align}
+\mathbf{\theta}_{ML}  & = \underset{\theta}{\text{argmax }} p_{\text{model}}(\mathbb{X}; \mathbf{\theta}) \\
+                      & = \underset{\theta}{\text{argmax }} \prod_{i=1}^m p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) & \text{samples i.i.d.}\\
+                      & = \underset{\theta}{\text{argmax }} \sum_{i=1}^m \log p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) & \text{to avoid underflow} \\
+                      & = \underset{\theta}{\text{argmax }} \frac{1}{m}\sum_{i=1}^m \log p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) & \text{argmax is unchanged by rescaling} \\
+                      & = \underset{\theta}{\text{argmax }} \text{E}_{\mathbf{X}\sim \hat p_{\text{data}}} \log p_{\text{model}}(\mathbf{x} ; \mathbf{\theta})
+\end{align}
+$$
+One way to interpret MLE-- view it as minimizing the dissimilarity between the empirical distribution $\hat p_{\text{data}}$ defined by the training set and the model distribution, measured by the KL divergence.
+$$
+D_{\text{KL}}(\hat p_{\text{data}} \parallel p_{\text{model}}) = \text{E}_{\mathbf{X}\sim \hat p_{\text{data}}} \left[\log \hat p_{\text{data}}(\mathbf{x}) - \log p_{\text{model}}(\mathbf{x}) \right]
+$$
+The left term, $\log \hat p_{\text{data}}(\mathbf{x})$, is a function only of the data generating process, and not of the model. This means when we train the model to minimize the KL divergence, we need only minimize
+$$
+-\text{E}_{\mathbf{X}\sim \hat p_{\text{data}}} \left[\log p_{\text{model}}(\mathbf{x}) \right]
+$$
+, which is the same as the maximization above.
+
+Minimizing the KL divergence corresponds exactly to minimizing the cross-entropy between the distributions.
+
+We can thus see MLE as an attempt to make the model distribution match the empirical distribution $\hat p_{\text{data}}$, in lieu of matching the true generating distribution $p_{\text{data}}$ which we do not have direct access to.
+
+Maximum likelihood = minimization of the negative log-likelihood (NLL)= minimization of cross-entropy.
+
+## **5.7.2 Support Vector Machines**
+A discriminative model driven by a linear function $\mathbf{w}^T\mathbf{x}$. Predicts positive class when $\mathbf{w}^T\mathbf{x}$ is positive, negative class when $\mathbf{w}^T\mathbf{x}$ is negative.
+
+The ***kernel trick***-- many ML algorithms can be written exclusively in terms of dot products between examples, e.g.
+$$
+\mathbf{w}^T\mathbf{x} = \sum_{i=1}^m\alpha_i \mathbf{x}^T \mathbf{x}^{(i)}
+$$
+, where $\mathbf{x^{(i)}}$ is a training example and $\mathbf{\alpha}$ is a vector of coefficients. Rewriting the learning algorithm this way allows us to replace $\mathbf{x}$ by the output of a given feature function $\phi(\mathbf{x})$ and the dot product with a function $k(\mathbf{x}, \mathbf{x}^{(i)}) = \phi(\mathbf{x}) \cdot \phi(\mathbf{x}^{(i)})$ called a ***kernel***. Analogous to the dot product case, we can make predictions using the function
+$$
+f(\mathbf{x}) = \sum_i\alpha_i k\left(\mathbf{x}, \mathbf{x}^{(i)} \right)
+$$
+
+This function is nonlinear with respect to $\mathbf{x}$, but the relationship between $\phi(\mathbf{x})$ and $f(\mathbf{x})$ is linear. Also, the relationship between $\alpha$ and $f(\mathbf{x})$ is linear. The kernel-based function is exactly equivalent to preprocessing the data by applying $\phi(\mathbf{x})$ to all inputs, then learning a linear model in the new transformed space.
+
+The kernel trick is powerful for two reasons. First, it allows us to learn models that are nonlinear as a function of $\mathbf{x}$ using convex optimization techniques that are guaranteed to converge efficiently. This is possible because we consider $\phi$ fixed and optimize only $\mathbf{\alpha}$, i.e., the optimziation algorithm can view the decision function as being linear in a different space. Second, the kernel function $k$ often admits an implementation that is significantly more computational efficient than naively constructing two $\phi(\mathbf{x})$ vectors and explicitly taking their dot product.
+
+In some cases, $\phi(\mathbf{x})$ can even be infinite dimensional, which would result in an infinite computational cost for the naive, explicit approach. In many cases, $k(\mathbf{x}, \mathbf{x^\prime})$ is a nonlinear, tractable function of $\mathbf{X}$ even when $\phi(\mathbf{x})$ is intractable. For example, construct a feature mapping $\phi(x)$ over the non-negative integers $x$. Suppose that this mapping returns a vector containing $x$ ones followed by infinitely many zeros. The kernel function $k(x, x^{(i)}) = \min(x, x^{(i)})$ is exactly equivalent to the corresponding infinite-dimensional dot product.
