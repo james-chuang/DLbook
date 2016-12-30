@@ -137,3 +137,33 @@ This function is nonlinear with respect to $\mathbf{x}$, but the relationship be
 The kernel trick is powerful for two reasons. First, it allows us to learn models that are nonlinear as a function of $\mathbf{x}$ using convex optimization techniques that are guaranteed to converge efficiently. This is possible because we consider $\phi$ fixed and optimize only $\mathbf{\alpha}$, i.e., the optimziation algorithm can view the decision function as being linear in a different space. Second, the kernel function $k$ often admits an implementation that is significantly more computational efficient than naively constructing two $\phi(\mathbf{x})$ vectors and explicitly taking their dot product.
 
 In some cases, $\phi(\mathbf{x})$ can even be infinite dimensional, which would result in an infinite computational cost for the naive, explicit approach. In many cases, $k(\mathbf{x}, \mathbf{x^\prime})$ is a nonlinear, tractable function of $\mathbf{X}$ even when $\phi(\mathbf{x})$ is intractable. For example, construct a feature mapping $\phi(x)$ over the non-negative integers $x$. Suppose that this mapping returns a vector containing $x$ ones followed by infinitely many zeros. The kernel function $k(x, x^{(i)}) = \min(x, x^{(i)})$ is exactly equivalent to the corresponding infinite-dimensional dot product.
+
+
+## **5.9 Stochastic Gradient Descent**
+***Stochastic gradient descent*** (SGD)-- an extension of gradient descent that powers nearly all of deep learning.
+
+The recurring problem: large training sets are necessary for good generalization, but large training sets are also more computationally expensive.
+
+Cost functions often decompose as a sum over training examples of some per-example loss function, E.g. the negative conditional log-likelihood of the training data can be written as
+$$
+J(\mathbf{\theta}) = \text{E}_{\mathbf{X},y\sim\hat p_{\text{data}}} L(\mathbf{x},y,\mathbf{\theta}) = \frac{1}{m}\sum_{i=1}^m L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+$$
+
+where $L$ is the per-example loss $L(\mathbf{x},y,\mathbf{\theta}) = -\log p(y \mid \mathbf{x}; \mathbf{\theta})$.
+
+For these additive cost functions, gradient descent requires computing
+$$
+\nabla_{\mathbf{\theta}} J(\mathbf{\theta}) = \frac{1}{m} \sum_{i=1}^m \nabla_{\mathbf{\theta}} L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+$$
+
+. The computational cost of this operation is $O(m)$. As the training set size grows to billions of examples, the time to take a single gradient step becomes prohibitively long. The insight of stochastic gradient descent: the gradient is an expectation, which can be estimated using a small set of samples. Specifically, on each step of the algorithm, we can sample a ***minibatch*** of examples $\mathbb{B} = \left\{\mathbf{x}^{(1)}, \dots, \mathbf{x}^{(m^\prime)} \right\}$ drawn uniformly from the training set. The minibatch size $m^\prime$ is typically chosen to be a relatively small number of examples, ranging from 1 to a few hundred. Crucially, $m^\prime$ is usually held fixed as the training set size $m$ grows. We may fit a training set with billions of examples using updates computed on only a hundred examples.
+
+The estimate of the gradient is formed as
+$$
+\mathbf{g} = \frac{1}{m^\prime} \nabla_{\mathbf{\theta}} \sum_{i=1}^{m^\prime} L \left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+$$
+
+using examples from the minibatch $\mathbb{B}$. SGD then follows the estimated gradient downhill:
+$$
+\mathbf{\theta} \gets \mathbf{\theta} - \epsilon \mathbf{g}
+$$

@@ -129,6 +129,7 @@ $(document).ready(function () {
 <li><a href="#capacity-overfitting-and-underfitting"><strong>5.2 Capacity, Overfitting and Underfitting</strong></a></li>
 <li><a href="#maximum-likelihood-estimation"><strong>5.5 Maximum Likelihood Estimation</strong></a></li>
 <li><a href="#support-vector-machines"><strong>5.7.2 Support Vector Machines</strong></a></li>
+<li><a href="#stochastic-gradient-descent"><strong>5.9 Stochastic Gradient Descent</strong></a></li>
 </ul>
 </div>
 
@@ -227,6 +228,18 @@ f(\mathbf{x}) = \sum_i\alpha_i k\left(\mathbf{x}, \mathbf{x}^{(i)} \right)
 <p>This function is nonlinear with respect to <span class="math inline">\(\mathbf{x}\)</span>, but the relationship between <span class="math inline">\(\phi(\mathbf{x})\)</span> and <span class="math inline">\(f(\mathbf{x})\)</span> is linear. Also, the relationship between <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(f(\mathbf{x})\)</span> is linear. The kernel-based function is exactly equivalent to preprocessing the data by applying <span class="math inline">\(\phi(\mathbf{x})\)</span> to all inputs, then learning a linear model in the new transformed space.</p>
 <p>The kernel trick is powerful for two reasons. First, it allows us to learn models that are nonlinear as a function of <span class="math inline">\(\mathbf{x}\)</span> using convex optimization techniques that are guaranteed to converge efficiently. This is possible because we consider <span class="math inline">\(\phi\)</span> fixed and optimize only <span class="math inline">\(\mathbf{\alpha}\)</span>, i.e., the optimziation algorithm can view the decision function as being linear in a different space. Second, the kernel function <span class="math inline">\(k\)</span> often admits an implementation that is significantly more computational efficient than naively constructing two <span class="math inline">\(\phi(\mathbf{x})\)</span> vectors and explicitly taking their dot product.</p>
 <p>In some cases, <span class="math inline">\(\phi(\mathbf{x})\)</span> can even be infinite dimensional, which would result in an infinite computational cost for the naive, explicit approach. In many cases, <span class="math inline">\(k(\mathbf{x}, \mathbf{x^\prime})\)</span> is a nonlinear, tractable function of <span class="math inline">\(\mathbf{X}\)</span> even when <span class="math inline">\(\phi(\mathbf{x})\)</span> is intractable. For example, construct a feature mapping <span class="math inline">\(\phi(x)\)</span> over the non-negative integers <span class="math inline">\(x\)</span>. Suppose that this mapping returns a vector containing <span class="math inline">\(x\)</span> ones followed by infinitely many zeros. The kernel function <span class="math inline">\(k(x, x^{(i)}) = \min(x, x^{(i)})\)</span> is exactly equivalent to the corresponding infinite-dimensional dot product.</p>
+</div>
+<div id="stochastic-gradient-descent" class="section level2">
+<h2><strong>5.9 Stochastic Gradient Descent</strong></h2>
+<p><strong><em>Stochastic gradient descent</em></strong> (SGD)– an extension of gradient descent that powers nearly all of deep learning.</p>
+<p>The recurring problem: large training sets are necessary for good generalization, but large training sets are also more computationally expensive.</p>
+<p>Cost functions often decompose as a sum over training examples of some per-example loss function, E.g. the negative conditional log-likelihood of the training data can be written as <span class="math display">\[
+J(\mathbf{\theta}) = \text{E}_{\mathbf{X},y\sim\hat p_{\text{data}}} L(\mathbf{x},y,\mathbf{\theta}) = \frac{1}{m}\sum_{i=1}^m L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+\]</span></p>
+<p>where <span class="math inline">\(L\)</span> is the per-example loss <span class="math inline">\(L(\mathbf{x},y,\mathbf{\theta}) = -\log p(y \mid \mathbf{x}; \mathbf{\theta})\)</span>.</p>
+<p>For these additive cost functions, gradient descent requires computing <span class="math display">\[
+\nabla_{\mathbf{\theta}} J(\mathbf{\theta}) = \frac{1}{m} \sum_{i=1}^m \nabla_{\mathbf{\theta}} L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+\]</span></p>
 </div>
 
 
