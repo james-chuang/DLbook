@@ -167,3 +167,25 @@ using examples from the minibatch $\mathbb{B}$. SGD then follows the estimated g
 $$
 \mathbf{\theta} \gets \mathbf{\theta} - \epsilon \mathbf{g}
 $$
+
+## **5.10 Building an ML algorithm**
+
+Nearly all deep learning algorithms combine specification of a ***dataset***, a ***cost function***, an ***optimization procedure***, and a ***model***.
+E.g. linear regression:
+
+  - dataset: $\mathbf{X}$ and $\mathbf{y}$
+  - cost function: $J(\mathbf{w}, b) = -\text{E}_{\mathbf{X}, y \sim \hat p_{\text{data}}} \log p_{\text{model}}\left(y \mid \mathbf{x} \right)$
+  - model: $p_{\text{model}}(y \mid \mathbf{x}) = \mathcal{N}(y; \mathbf{x}^T\mathbf{w}+b,1)$
+  - optimization algorithm: solve for zero gradient with normal equations
+  
+The cost function typically includes at least one term that causes the learning process to perform statistical estimation. The most common cost function is the negative log-likelihood (minimizing NLL = maximum likelihood estimation).
+
+The cost function may also include additional terms, such as regularization terms like weight decay (aka L2, or ridge regression).
+
+If the model is nonlinear, then the cost function usually cannot be optimized in closed form. This requires an iterative numerical optimization procedure, e.g. gradient descent.
+
+In some cases, the cost function may be a function that we cannot actually evaluate, for computational reasons. In these cases, we can still approximately minimize the function using iterative numerical optimization if we have some way of approximating its gradients.
+
+## **5.11 Challenges Motivating Deep Learning**
+
+

@@ -1,0 +1,13 @@
+---
+output:
+  html_document:
+    toc: TRUE
+    fig_width: 4.5
+    css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+***Deep feedforward networks***, aka ***feedforward neural networks***, aka ***multi-layer perceptrons*** are the quintessential deep learning models. The goal of a feedforward network: approximate some function $f^*$. 
