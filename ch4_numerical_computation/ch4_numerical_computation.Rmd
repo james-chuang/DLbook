@@ -1,6 +1,7 @@
 ---
 output:
   html_document:
+    toc: TRUE
     fig_width: 4.5
     css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
 ---
@@ -51,16 +52,45 @@ $$
 
 ## **DL 4.3 gradient-based optimization**
 ***Optimization***: minimizing a function $f(x)$ by altering $x$. (Maximization is simply minimizing $-f(x)$).
-The function to be minimized or maximized is called the ***objective function*** or ***criterion***. When the function is to be minimized, it can also be called the ***cost function***, ***loss function***, or ***error function***.
+
+  - ***objective function*** or ***criterion***: the function to be minimized or maximized
+      - When the function is to be minimized, it can also be called the ***cost function***, ***loss function***, or ***error function***.
 
 The value that minimizes or maximizes a function can be denoted with a superscript $*$, i.e. $x^* = \arg \min f(x)$.
 
 The derivative of a function is useful for function minimization because it tells us how to change $x$ in order to make a small improvement in $y$. For small enough $\epsilon$, $f(x-\epsilon \text{ sign} (f^\prime(x)))$ is less than $f(x)$. This technique is called ***gradient descent***.
 
-Points where $f^\prime(x) = 0$, are ***critical points*** or ***stationary points***, and can be a ***local minimum***, ***local maximum***, or ***saddle point***. The point with the absolute lowest value of $f(x)$ is a ***global minimum*** (there can be more than one). In deep learning, the functions may have many suboptimal local minima, and many saddle points surrounded by flat regions. This makes optimization difficult, especially for high-dimensional functions. We therefore usually settle for finding a "very low" value of $f$, which is not necessarily a global minimum.
+  - ***critical points*** or ***stationary points***: points where $f^\prime(x) = 0$
+      - can be a ***local minimum***, ***local maximum***, or ***saddle point***
+  - ***global minimum***: The point with the absolute lowest value of $f(x)$ (there can be more than one).
+      - In deep learning, the functions may have many suboptimal local minima, and many saddle points surrounded by flat regions. This makes optimization difficult, especially for high-dimensional functions. We therefore usually settle for finding a "very low" value of $f$, which is not necessarily a global minimum.
 
 The above can be generalized to functions with multiple inputs $f: \mathbb{R}^n \rightarrow \mathbb{R}$. (In order to minimize the function, the output must still be a single scalar output). In this case, the ***gradient*** $\nabla_xf(x)$ is analogous to the derivative. The ***directional derivative*** in a direction $u$ (a unit vector) is the slope of the function $f$ in direction $u$, i.e. $\frac{\partial}{\partial \alpha} f(x+ \alpha u) = u^T \nabla_xf(x)$. The function $f$ can be minimized by moving in the direction of the negative gradient (This is known as the ***method of steepest descent*** or ***gradient descent***):
 $$
 x^\prime = x - \epsilon \nabla_x f(x)
 $$
 , where $\epsilon$ is the ***learning rate***, a positive scalar determining the step size.
+
+How to set the learning rate $\epsilon$?
+
+  - popular approach is to set $\epsilon$ to a small constant
+  - or, solve for step size that makes directional derivative zero
+  - or, ***line search***: evaluate $f(\mathbf{x} - \epsilon \nabla_{\mathbf{x}}f(\mathbf{x}))$ for several values of $\epsilon$ and choose the one that results in the smallest objective function value
+  
+Steepest descent converges when $\nabla_{\mathbf{x}}f(\mathbf{x}) = 0$
+  - in cases where there is an analytical solution, this point can be jumped to directly
+  
+Gradient descent is limited to optimization in continuous spaces
+  - the concept of making small moves towards better configurations can be generalized to discrete spaces (this is called ***hill climbing***)
+  
+### **DL 4.3.1 Jacobian and Hessian Matrices**
+
+Sometimes need the partial derivatives of a function $f: \mathbb{R}^m \to \mathbb{R}^n$.
+
+**Jacobian matrix**: the matrix of all partial derivatives
+$$
+J \in \mathbb{R}^{n \times m}, \quad J_{i,j} = \frac{\partial}{\partial x_j} f(x)_i
+$$
+ - second derivatives indicate *curvature*
+    - important because it tells us whether a gradient step will cause as much of an improvement as we would expect based on the gradient alone
+  

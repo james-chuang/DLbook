@@ -131,6 +131,7 @@ $(document).ready(function () {
 <li><a href="#support-vector-machines"><strong>5.7.2 Support Vector Machines</strong></a></li>
 <li><a href="#stochastic-gradient-descent"><strong>5.9 Stochastic Gradient Descent</strong></a></li>
 <li><a href="#building-an-ml-algorithm"><strong>5.10 Building an ML algorithm</strong></a></li>
+<li><a href="#challenges-motivating-deep-learning"><strong>5.11 Challenges Motivating Deep Learning</strong></a></li>
 </ul>
 </div>
 
@@ -258,6 +259,13 @@ J(\mathbf{\theta}) = \text{E}_{\mathbf{X},y\sim\hat p_{\text{data}}} L(\mathbf{x
 <li>model: <span class="math inline">\(p_{\text{model}}(y \mid \mathbf{x}) = \mathcal{N}(y; \mathbf{x}^T\mathbf{w}+b,1)\)</span></li>
 <li>optimization algorithm: solve for zero gradient with normal equations</li>
 </ul>
+<p>The cost function typically includes at least one term that causes the learning process to perform statistical estimation. The most common cost function is the negative log-likelihood (minimizing NLL = maximum likelihood estimation).</p>
+<p>The cost function may also include additional terms, such as regularization terms like weight decay (aka L2, or ridge regression).</p>
+<p>If the model is nonlinear, then the cost function usually cannot be optimized in closed form. This requires an iterative numerical optimization procedure, e.g. gradient descent.</p>
+<p>In some cases, the cost function may be a function that we cannot actually evaluate, for computational reasons. In these cases, we can still approximately minimize the function using iterative numerical optimization if we have some way of approximating its gradients.</p>
+</div>
+<div id="challenges-motivating-deep-learning" class="section level2">
+<h2><strong>5.11 Challenges Motivating Deep Learning</strong></h2>
 </div>
 
 

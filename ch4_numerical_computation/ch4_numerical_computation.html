@@ -119,6 +119,13 @@ $(document).ready(function () {
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#dl-4.1-overflow-and-underflow"><strong>DL 4.1 overflow and underflow</strong></a></li>
+<li><a href="#dl-4.2-poor-conditioning"><strong>DL 4.2 poor conditioning</strong></a></li>
+<li><a href="#dl-4.3-gradient-based-optimization"><strong>DL 4.3 gradient-based optimization</strong></a></li>
+</ul>
+</div>
 
 <p>My notes on <a href="http://www.deeplearningbook.org/">Deep Learning Book</a> Chapter 4 on Numerical Computation.</p>
 <p>ML algorithms usually require a high amount of numerical computation, which typically refers to algorithms that solve mathematical problems by methods that update estimates of a solution iteratively, rather than solving analytically. Evaluating a function involving real numbers on a computer can be difficult, because the real numbers must be represented with a finite amount of memory.</p>
@@ -153,10 +160,25 @@ $(document).ready(function () {
 </div>
 <div id="dl-4.3-gradient-based-optimization" class="section level2">
 <h2><strong>DL 4.3 gradient-based optimization</strong></h2>
-<p><strong><em>Optimization</em></strong>: minimizing a function <span class="math inline">\(f(x)\)</span> by altering <span class="math inline">\(x\)</span>. (Maximization is simply minimizing <span class="math inline">\(-f(x)\)</span>). The function to be minimized or maximized is called the <strong><em>objective function</em></strong> or <strong><em>criterion</em></strong>. When the function is to be minimized, it can also be called the <strong><em>cost function</em></strong>, <strong><em>loss function</em></strong>, or <strong><em>error function</em></strong>.</p>
+<p><strong><em>Optimization</em></strong>: minimizing a function <span class="math inline">\(f(x)\)</span> by altering <span class="math inline">\(x\)</span>. (Maximization is simply minimizing <span class="math inline">\(-f(x)\)</span>).</p>
+<ul>
+<li><strong><em>objective function</em></strong> or <strong><em>criterion</em></strong>: the function to be minimized or maximized
+<ul>
+<li>When the function is to be minimized, it can also be called the <strong><em>cost function</em></strong>, <strong><em>loss function</em></strong>, or <strong><em>error function</em></strong>.</li>
+</ul></li>
+</ul>
 <p>The value that minimizes or maximizes a function can be denoted with a superscript <span class="math inline">\(*\)</span>, i.e. <span class="math inline">\(x^* = \arg \min f(x)\)</span>.</p>
 <p>The derivative of a function is useful for function minimization because it tells us how to change <span class="math inline">\(x\)</span> in order to make a small improvement in <span class="math inline">\(y\)</span>. For small enough <span class="math inline">\(\epsilon\)</span>, <span class="math inline">\(f(x-\epsilon \text{ sign} (f^\prime(x)))\)</span> is less than <span class="math inline">\(f(x)\)</span>. This technique is called <strong><em>gradient descent</em></strong>.</p>
-<p>Points where <span class="math inline">\(f^\prime(x) = 0\)</span>, are <strong><em>critical points</em></strong> or <strong><em>stationary points</em></strong>, and can be a <strong><em>local minimum</em></strong>, <strong><em>local maximum</em></strong>, or <strong><em>saddle point</em></strong>. The point with the absolute lowest value of <span class="math inline">\(f(x)\)</span> is a <strong><em>global minimum</em></strong> (there can be more than one). In deep learning, the functions may have many suboptimal local minima, and many saddle points surrounded by flat regions. This makes optimization difficult, especially for high-dimensional functions. We therefore usually settle for finding a “very low” value of <span class="math inline">\(f\)</span>, which is not necessarily a global minimum.</p>
+<ul>
+<li><strong><em>critical points</em></strong> or <strong><em>stationary points</em></strong>: points where <span class="math inline">\(f^\prime(x) = 0\)</span>
+<ul>
+<li>can be a <strong><em>local minimum</em></strong>, <strong><em>local maximum</em></strong>, or <strong><em>saddle point</em></strong></li>
+</ul></li>
+<li><strong><em>global minimum</em></strong>: The point with the absolute lowest value of <span class="math inline">\(f(x)\)</span> (there can be more than one).
+<ul>
+<li>In deep learning, the functions may have many suboptimal local minima, and many saddle points surrounded by flat regions. This makes optimization difficult, especially for high-dimensional functions. We therefore usually settle for finding a “very low” value of <span class="math inline">\(f\)</span>, which is not necessarily a global minimum.</li>
+</ul></li>
+</ul>
 <p>The above can be generalized to functions with multiple inputs <span class="math inline">\(f: \mathbb{R}^n \rightarrow \mathbb{R}\)</span>. (In order to minimize the function, the output must still be a single scalar output). In this case, the <strong><em>gradient</em></strong> <span class="math inline">\(\nabla_xf(x)\)</span> is analogous to the derivative. The <strong><em>directional derivative</em></strong> in a direction <span class="math inline">\(u\)</span> (a unit vector) is the slope of the function <span class="math inline">\(f\)</span> in direction <span class="math inline">\(u\)</span>, i.e. <span class="math inline">\(\frac{\partial}{\partial \alpha} f(x+ \alpha u) = u^T \nabla_xf(x)\)</span>. The function <span class="math inline">\(f\)</span> can be minimized by moving in the direction of the negative gradient (This is known as the <strong><em>method of steepest descent</em></strong> or <strong><em>gradient descent</em></strong>): <span class="math display">\[
 x^\prime = x - \epsilon \nabla_x f(x)
 \]</span> , where <span class="math inline">\(\epsilon\)</span> is the <strong><em>learning rate</em></strong>, a positive scalar determining the step size.</p>
