@@ -127,6 +127,7 @@ $(document).ready(function () {
 <li><a href="#dl-4.3.1-jacobian-and-hessian-matrices"><strong>DL 4.3.1 Jacobian and Hessian Matrices</strong></a></li>
 </ul></li>
 <li><a href="#dl-4.4-constrained-optimization"><strong>DL 4.4 Constrained Optimization</strong></a></li>
+<li><a href="#example-linear-least-squares"><strong>4.5 Example: Linear Least Squares</strong></a></li>
 </ul>
 </div>
 
@@ -365,29 +366,102 @@ f(\mathbf{x}) \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}-\mathbf{
 <ul>
 <li>common solution is a norm constraint, e.g. <span class="math inline">\(\lVert \mathbf{x} \rVert \leq 1\)</span></li>
 </ul></li>
-<li>the <strong><em>Karush-Kuhn-Tucker</em></strong> (KKT) approach: a very general solution to constrained optimization
+<li>the <strong><em>Karush-Kuhn-Tucker</em></strong> (KKT) approach: a very general solution to constrained optimization (also see CS229 notes 3)
 <ul>
 <li>design a different, unconstrained optimization problem whose solution can be converted into a solution to the original, constrained optimization problem</li>
 <li>do this by introducing a new function- the <strong><em>generalized Lagrangian</em></strong> or <strong><em>generalized Lagrange function</em></strong>
 <ul>
-<li>first, describe <span class="math inline">\(\mathbb{S}\)</span> in terms of <span class="math inline">\(m\)</span> functions <span class="math inline">\(g^{(i)}\)</span> and <span class="math inline">\(n\)</span> functions <span class="math inline">\(h^{(j)}\)</span> such that <span class="math display">\[
+<li>first, describe <span class="math inline">\(\mathbb{S}\)</span> in terms of <span class="math inline">\(m\)</span> functions <span class="math inline">\(g^{(i)}\)</span> and <span class="math inline">\(n\)</span> functions <span class="math inline">\(h^{(j)}\)</span> such that</li>
+</ul>
+<span class="math display">\[
   \mathbb{S} = \left\{\mathbf{x} \mid \begin{cases}
-                                  \forall i, g^{(i)} (\mathbf{x}) = 0 &amp; \text{equality constraints}\\
-                                  \forall j, h^{(j)} (\mathbf{x}) \leq 0 &amp; \text{inequality constraints}
-                                  \end{cases}
-                                  \right\}
-  \]</span></li>
+                                      \forall i, g^{(i)} (\mathbf{x}) = 0 &amp; \text{equality constraints}\\
+                                      \forall j, h^{(j)} (\mathbf{x}) \leq 0 &amp; \text{inequality constraints}
+                                      \end{cases}
+                                      \right\}
+  \]</span>
+<ul>
 <li>introduce KKT multipliers <span class="math inline">\(\lambda_i\)</span> and <span class="math inline">\(\alpha_j\)</span> for each constraint, then define the generalized Lagrangian: <span class="math display">\[
   L (\mathbf{x}, \lambda, \alpha) = f(\mathbf{x}) + \sum_i \lambda_i g^{(i)}(\mathbf{x}) + \sum_{j}\alpha_j h^{(j)}(\mathbf{x})
   \]</span></li>
 <li>consider the following quantity: <span class="math display">\[
-  \min_x \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha),
-  \]</span> which has the same optimal function value and optimal points <span class="math inline">\(\mathbf{x}\)</span> as <span class="math display">\[
-  \min_{\mathbf{x}\in \mathbb{S}} f(\mathbf{x})
-  \]</span></li>
+  \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha).
+  \]</span> Any time a constraint is violated (<span class="math inline">\(g^{(i)} \neq 0\)</span> or <span class="math inline">\(h^{(i)} &gt; 0\)</span>), <span class="math display">\[
+  \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) = \infty
+  \]</span> while when the constraints are all satisfied, <span class="math display">\[
+   \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) = f(x).
+  \]</span> This means that <span class="math display">\[
+  \min_{\mathbf{x}}\max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) = \min_{\mathbf{x}\in \mathbb{S}} f(\mathbf{x}),
+  \]</span> i.e., the solution to the new, unconstrained problem is the same as the original constrained problem.</li>
+</ul></li>
+<li>regarding the inequality constraints:
+<ul>
+<li>a constraint <span class="math inline">\(h^{(i)}(\mathbf{x}) \leq 0\)</span> is <strong>active</strong> if it holds with equality, i.e. <span class="math inline">\(h^{(i)}(\mathbf{x})=0\)</span>
+<ul>
+<li>if a constraint is not active, then the solution to the problem using that constraint would remain at least a local solution if that constraint were removed</li>
+<li>because an inactive <span class="math inline">\(h^{(i)}\)</span> has a negative value, the solution to <span class="math display">\[
+  \min_{\mathbf{x}}\max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) 
+  \]</span> will have <span class="math inline">\(\alpha_i = 0\)</span>
+<ul>
+<li>thus, <span class="math inline">\(\alpha \mathbf{h}(\mathbf{x}) = 0\)</span></li>
+<li>i.e., at least one of the constraints <span class="math inline">\(\alpha_i \geq 0\)</span> or <span class="math inline">\(h^{(i)} \leq 0\)</span> must be active at the solution
+<ul>
+<li>the solution is either on the boundary imposed by the inequality and its KKT multiplier influences the solution, or the inequality has no influence on the solution and its KKT multiplier is zero</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>the above properties are the <strong><em>Karush-Kuhn-Tucker (KKT) condtions</em></strong>, i.e.:
+<ul>
+<li>the gradient of the generalized Lagrangian is zero</li>
+<li>all constraints on both <span class="math inline">\(x\)</span> and the KKT multipliers are satisfied</li>
+<li><span class="math inline">\(\alpha \odot \mathbf{h}(\mathbf{x}) = \mathbf{0}\)</span></li>
 </ul></li>
 </ul></li>
 </ul>
+</div>
+<div id="example-linear-least-squares" class="section level2">
+<h2><strong>4.5 Example: Linear Least Squares</strong></h2>
+<p>Minimize the squared error loss function <span class="math display">\[
+f(\mathbf{x}) = \frac{1}{2} \lVert \mathbf{Ax}- \mathbf{b} \rVert_2^2
+\]</span></p>
+<p>This can be analytically solved by taking the gradient and setting it to zero, since it is a positive definite quadratic function. However, it can also be used as a simple test case for gradient-based optimization.</p>
+<p>Finding the gradient: <span class="math display">\[
+\begin{align}
+f(\mathbf{x}) &amp; = \frac{1}{2} \lVert \mathbf{Ax}- \mathbf{b} \rVert_2^2 \\
+              &amp; = \frac{1}{2} \left(\mathbf{Ax}- \mathbf{b} \right)^T \left( \mathbf{Ax}- \mathbf{b} \right) \\
+              &amp; = \frac{1}{2} \left[\left(\mathbf{Ax} \right)^T \left(\mathbf{Ax} \right) - \left(\mathbf{Ax} \right)^T\mathbf{b} - \mathbf{b}^T \left(\mathbf{Ax} \right) + \mathbf{b}^T\mathbf{b}  \right] \\
+              &amp; = \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] \\
+\nabla_{\mathbf{x}} f(\mathbf{x}) &amp; = \frac{1}{2} \left[2 \mathbf{A}^T\mathbf{Ax} - 2 \mathbf{A}^T \mathbf{b}\right] \\
+                                  &amp; = \mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b}
+\end{align}
+\]</span></p>
+<p>Pseudocode for minimization by gradient descent:</p>
+<ul>
+<li>intiialize step size <span class="math inline">\(\epsilon\)</span> and convergence tolerance <span class="math inline">\(\delta\)</span> to small, positive numbers</li>
+<li><strong>while</strong> <span class="math inline">\(\lVert \mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b} \rVert_2 &gt; \delta\)</span> <strong>do</strong>
+<ul>
+<li><span class="math inline">\(\mathbf{x} \gets \mathbf{x} - \epsilon \left(\mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b} \right)\)</span></li>
+</ul></li>
+</ul>
+<p>If solving by Newton’s method, the quadratic approximation is exact (since <span class="math inline">\(f\)</span> is a positive definite quadratic function), so the minimum is reached in one step.</p>
+<p>Suppose we want to minimize the same function, but subject to the constraint <span class="math inline">\(\mathbf{x}^T\mathbf{x} \leq 1\)</span>. This constraint can be rewritten as <span class="math inline">\(\mathbf{x}^T\mathbf{x} -1 \leq 0\)</span>. Therefore, the Lagrangian is <span class="math display">\[
+L(\mathbf{x}, \lambda) = f(\mathbf{x}) + \lambda \left(\mathbf{x}^T \mathbf{x} -1 \right),
+\]</span> and the solution to the original (primal) problem can be found by solving <span class="math display">\[
+\min_{\mathbf{x}} \max_{\lambda, \lambda \geq 0} L(\mathbf{x}, \lambda)
+\]</span></p>
+<p>The smallest-norm solution to this unconstrained least squares problem may be found using the Moore-Penrose pseudoinverse <span class="math inline">\(\mathbf{x} = \mathbf{A}^+ \mathbf{b}\)</span>. If this point is feasible, then it is the solution to the constrained problem. Otherwise, we must find a solution where the constraint is active. Start by differentiating the Lagrangian w.r.t. <span class="math inline">\(\mathbf{x}\)</span> and setting it equal to the zero vector:</p>
+<p><span class="math display">\[
+\begin{align}
+L(\mathbf{x}, \lambda)  &amp; = f(\mathbf{x}) + \lambda \left(\mathbf{x}^T \mathbf{x} -1 \right) \\
+                        &amp; = \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] + \lambda \mathbf{x}^T \mathbf{x} - \lambda \\
+\nabla_{\mathbf{x}} L(\mathbf{x}, \lambda) &amp; = \frac{1}{2} \left[2 \mathbf{A}^T \mathbf{Ax} -2 \mathbf{A}^T\mathbf{b}\right] + \lambda \mathbf{x} = 0 \\
+\mathbf{A}^T \mathbf{Ax} - \mathbf{A}^T\mathbf{b} + 2 \lambda \mathbf{x} &amp;= 0 \\
+\left(\mathbf{A}^T\mathbf{x}+ 2 \lambda \mathbf{I} \right)\mathbf{x} &amp; = \mathbf{A}^T \mathbf{b} \\
+\mathbf{x} &amp; = \left(\mathbf{A}^T\mathbf{x}+ 2 \lambda \mathbf{I} \right)^{-1} \mathbf{A}^T \mathbf{b}
+\end{align}
+\]</span></p>
+<p>The solution must take the above form, and the magnitude of <span class="math inline">\(\lambda\)</span> must be chosen such that the result obeys the constraint (i.e., <span class="math inline">\(\mathbf{x}^T \mathbf{x}\)</span>).</p>
 </div>
 
 

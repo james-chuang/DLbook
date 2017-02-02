@@ -210,10 +210,11 @@ The most succesful field of specialized optimization is ***convex optimization**
       - ***feasible points***: points $x$ in the set $\mathbb{S}$
   - often wish to find a solution that is "small" in some sense
       - common solution is a norm constraint, e.g. $\lVert \mathbf{x} \rVert \leq 1$
-  - the ***Karush-Kuhn-Tucker*** (KKT) approach: a very general solution to constrained optimization
+  - the ***Karush-Kuhn-Tucker*** (KKT) approach: a very general solution to constrained optimization (also see CS229 notes 3)
       - design a different, unconstrained optimization problem whose solution can be converted into a solution to the original, constrained optimization problem
       - do this by introducing a new function- the ***generalized Lagrangian*** or ***generalized Lagrange function***
           - first, describe $\mathbb{S}$ in terms of $m$ functions $g^{(i)}$ and $n$ functions $h^{(j)}$ such that
+          
           $$
           \mathbb{S} = \left\{\mathbf{x} \mid \begin{cases}
                                               \forall i, g^{(i)} (\mathbf{x}) = 0 & \text{equality constraints}\\
@@ -227,9 +228,97 @@ The most succesful field of specialized optimization is ***convex optimization**
           $$
           - consider the following quantity:
           $$
-          \min_{\mathbf{x}} \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha),
+          \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha).
           $$
-          which has the same optimal function value and optimal points $\mathbf{x}^*$ as
+          Any time a constraint is violated ($g^{(i)} \neq 0$ or $h^{(i)} > 0$),
           $$
-          \min_{\mathbf{x}\in \mathbb{S}} f(\mathbf{x})
+          \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) = \infty
           $$
+          while when the constraints are all satisfied,
+          $$
+           \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) = f(x).
+          $$
+          This means that 
+          $$
+          \min_{\mathbf{x}}\max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) = \min_{\mathbf{x}\in \mathbb{S}} f(\mathbf{x}),
+          $$
+          i.e., the solution to the new, unconstrained problem is the same as the original constrained problem.
+      - regarding the inequality constraints:
+          - a constraint $h^{(i)}(\mathbf{x}) \leq 0$ is **active** if it holds with equality, i.e. $h^{(i)}(\mathbf{x})=0$
+              - if a constraint is not active, then the solution to the problem using that constraint would remain at least a local solution if that constraint were removed
+              - because an inactive $h^{(i)}$ has a negative value, the solution to
+              $$
+              \min_{\mathbf{x}}\max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) 
+              $$
+              will have $\alpha_i = 0$
+                  - thus, $\alpha \mathbf{h}(\mathbf{x}) = 0$
+                  - i.e., at least one of the constraints $\alpha_i \geq 0$ or $h^{(i)} \leq 0$ must be active at the solution
+                      - the solution is either on the boundary imposed by the inequality and its KKT multiplier influences the solution, or the inequality has no influence on the solution and its KKT multiplier is zero
+      - the above properties are the ***Karush-Kuhn-Tucker (KKT) condtions***, i.e.:
+          - the gradient of the generalized Lagrangian is zero
+          - all constraints on both $x$ and the KKT multipliers are satisfied
+          - $\alpha \odot \mathbf{h}(\mathbf{x}) = \mathbf{0}$
+          
+## **4.5 Example: Linear Least Squares**
+
+Minimize the squared error loss function
+$$
+f(\mathbf{x}) = \frac{1}{2} \lVert \mathbf{Ax}- \mathbf{b} \rVert_2^2
+$$
+
+This can be analytically solved by taking the gradient and setting it to zero, since it is a positive definite quadratic function. However, it can also be used as a simple test case for gradient-based optimization.
+
+Finding the gradient:
+$$
+\begin{align}
+f(\mathbf{x}) & = \frac{1}{2} \lVert \mathbf{Ax}- \mathbf{b} \rVert_2^2 \\
+              & = \frac{1}{2} \left(\mathbf{Ax}- \mathbf{b} \right)^T \left( \mathbf{Ax}- \mathbf{b} \right) \\
+              & = \frac{1}{2} \left[\left(\mathbf{Ax} \right)^T \left(\mathbf{Ax} \right) - \left(\mathbf{Ax} \right)^T\mathbf{b} - \mathbf{b}^T \left(\mathbf{Ax} \right) + \mathbf{b}^T\mathbf{b}  \right] \\
+              & = \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] \\
+\nabla_{\mathbf{x}} f(\mathbf{x}) & = \frac{1}{2} \left[2 \mathbf{A}^T\mathbf{Ax} - 2 \mathbf{A}^T \mathbf{b}\right] \\
+                                  & = \mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b}
+\end{align}
+$$
+
+Pseudocode for minimization by gradient descent:
+
+  - intiialize step size $\epsilon$ and convergence tolerance $\delta$ to small, positive numbers
+  - **while** $\lVert \mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b} \rVert_2 > \delta$ **do**
+      - $\mathbf{x} \gets \mathbf{x} - \epsilon \left(\mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b} \right)$
+
+If solving by Newton's method, the quadratic approximation is exact (since $f$ is a positive definite quadratic function), so the minimum is reached in one step.
+
+Suppose we want to minimize the same function, but subject to the constraint $\mathbf{x}^T\mathbf{x} \leq 1$. This constraint can be rewritten as $\mathbf{x}^T\mathbf{x} -1 \leq 0$. Therefore, the Lagrangian is
+$$
+L(\mathbf{x}, \lambda) = f(\mathbf{x}) + \lambda \left(\mathbf{x}^T \mathbf{x} -1 \right),
+$$
+and the solution to the original (primal) problem can be found by solving
+$$
+\min_{\mathbf{x}} \max_{\lambda, \lambda \geq 0} L(\mathbf{x}, \lambda)
+$$
+
+The smallest-norm solution to this unconstrained least squares problem may be found using the Moore-Penrose pseudoinverse $\mathbf{x} = \mathbf{A}^+ \mathbf{b}$. If this point is feasible, then it is the solution to the constrained problem. Otherwise, we must find a solution where the constraint is active. Start by differentiating the Lagrangian w.r.t. $\mathbf{x}$ and setting it equal to the zero vector:
+
+$$
+\begin{align}
+L(\mathbf{x}, \lambda)  & = f(\mathbf{x}) + \lambda \left(\mathbf{x}^T \mathbf{x} -1 \right) \\
+                        & = \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] + \lambda \mathbf{x}^T \mathbf{x} - \lambda \\
+\nabla_{\mathbf{x}} L(\mathbf{x}, \lambda) & = \frac{1}{2} \left[2 \mathbf{A}^T \mathbf{Ax} -2 \mathbf{A}^T\mathbf{b}\right] + \lambda \mathbf{x} = 0 \\
+\mathbf{A}^T \mathbf{Ax} - \mathbf{A}^T\mathbf{b} + 2 \lambda \mathbf{x} &= 0 \\
+\left(\mathbf{A}^T\mathbf{x}+ 2 \lambda \mathbf{I} \right)\mathbf{x} & = \mathbf{A}^T \mathbf{b} \\
+\mathbf{x} & = \left(\mathbf{A}^T\mathbf{x}+ 2 \lambda \mathbf{I} \right)^{-1} \mathbf{A}^T \mathbf{b}
+\end{align}
+$$
+
+The solution must take the above form, and the magnitude of $\lambda$ must be chosen such that the result obeys the constraint (i.e., $\mathbf{x}^T \mathbf{x} \leq 1$). Value can be found by performing gradient ascent on $\lambda$:
+$$
+\begin{align}
+L(\mathbf{x}, \lambda) &= \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] + \lambda \mathbf{x}^T \mathbf{x} - \lambda \\
+\frac{\partial}{\partial \lambda} L \left(\mathbf{x}, \lambda \right) & = \mathbf{x}^T \mathbf{x} - 1 \\
+\\
+& \begin{cases}
+\mathbf{x}^T \mathbf{x} > 1 \quad\rightarrow  \quad \frac{\partial L}{\partial \lambda} > 1 \quad \rightarrow \text{gradient ascent increases } \lambda \\
+\mathbf{x}^T \mathbf{x} > 1 \quad\rightarrow  \quad \frac{\partial L}{\partial \lambda} > 1 \quad \rightarrow \text{gradient ascent increases } \lambda 
+\end{cases}
+\end{align}
+$$
