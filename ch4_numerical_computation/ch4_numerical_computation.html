@@ -123,7 +123,10 @@ $(document).ready(function () {
 <ul>
 <li><a href="#dl-4.1-overflow-and-underflow"><strong>DL 4.1 overflow and underflow</strong></a></li>
 <li><a href="#dl-4.2-poor-conditioning"><strong>DL 4.2 poor conditioning</strong></a></li>
-<li><a href="#dl-4.3-gradient-based-optimization"><strong>DL 4.3 gradient-based optimization</strong></a></li>
+<li><a href="#dl-4.3-gradient-based-optimization"><strong>DL 4.3 gradient-based optimization</strong></a><ul>
+<li><a href="#dl-4.3.1-jacobian-and-hessian-matrices"><strong>DL 4.3.1 Jacobian and Hessian Matrices</strong></a></li>
+</ul></li>
+<li><a href="#dl-4.4-constrained-optimization"><strong>DL 4.4 Constrained Optimization</strong></a></li>
 </ul>
 </div>
 
@@ -182,6 +185,209 @@ $(document).ready(function () {
 <p>The above can be generalized to functions with multiple inputs <span class="math inline">\(f: \mathbb{R}^n \rightarrow \mathbb{R}\)</span>. (In order to minimize the function, the output must still be a single scalar output). In this case, the <strong><em>gradient</em></strong> <span class="math inline">\(\nabla_xf(x)\)</span> is analogous to the derivative. The <strong><em>directional derivative</em></strong> in a direction <span class="math inline">\(u\)</span> (a unit vector) is the slope of the function <span class="math inline">\(f\)</span> in direction <span class="math inline">\(u\)</span>, i.e. <span class="math inline">\(\frac{\partial}{\partial \alpha} f(x+ \alpha u) = u^T \nabla_xf(x)\)</span>. The function <span class="math inline">\(f\)</span> can be minimized by moving in the direction of the negative gradient (This is known as the <strong><em>method of steepest descent</em></strong> or <strong><em>gradient descent</em></strong>): <span class="math display">\[
 x^\prime = x - \epsilon \nabla_x f(x)
 \]</span> , where <span class="math inline">\(\epsilon\)</span> is the <strong><em>learning rate</em></strong>, a positive scalar determining the step size.</p>
+<p>How to set the learning rate <span class="math inline">\(\epsilon\)</span>?</p>
+<ul>
+<li>popular approach is to set <span class="math inline">\(\epsilon\)</span> to a small constant</li>
+<li>or, solve for step size that makes directional derivative zero</li>
+<li>or, <strong><em>line search</em></strong>: evaluate <span class="math inline">\(f(\mathbf{x} - \epsilon \nabla_{\mathbf{x}}f(\mathbf{x}))\)</span> for several values of <span class="math inline">\(\epsilon\)</span> and choose the one that results in the smallest objective function value</li>
+</ul>
+<p>Steepest descent converges when <span class="math inline">\(\nabla_{\mathbf{x}}f(\mathbf{x}) = 0\)</span></p>
+<ul>
+<li>in cases where there is an analytical solution, this point can be jumped to directly</li>
+</ul>
+<p>Gradient descent is limited to optimization in continuous spaces</p>
+<ul>
+<li>the concept of making small moves towards better configurations can be generalized to discrete spaces (this is called <strong><em>hill climbing</em></strong>)</li>
+</ul>
+<div id="dl-4.3.1-jacobian-and-hessian-matrices" class="section level3">
+<h3><strong>DL 4.3.1 Jacobian and Hessian Matrices</strong></h3>
+<p>Sometimes need the partial derivatives of a function <span class="math inline">\(f: \mathbb{R}^m \to \mathbb{R}^n\)</span>.</p>
+<p><strong>Jacobian matrix</strong>: <span class="math inline">\(\mathbf{J}\left(f \left(\mathbf{x} \right) \right)\)</span> the matrix of all partial derivatives <span class="math display">\[
+J \in \mathbb{R}^{n \times m}, \quad J_{i,j} = \frac{\partial}{\partial x_j} f(x)_i
+\]</span></p>
+<p>second derivatives indicate <em>curvature</em></p>
+<ul>
+<li>important because it tells us whether a gradient step will cause as much of an improvement as we would expect based on the gradient alone</li>
+<li><span class="math inline">\(f^{\prime \prime}(x) = 0\)</span>: no curvature, value can be predicted using only the gradient</li>
+<li><span class="math inline">\(f^{\prime \prime}(x) &lt; 0\)</span>: function curves downward, so cost function decreases by more than <span class="math inline">\(\epsilon\)</span></li>
+<li><span class="math inline">\(f^{\prime \prime}(x) &gt; 0\)</span>: function curves upward, so cost function decreses by less than <span class="math inline">\(\epsilon\)</span></li>
+</ul>
+<p><strong>Hessian matrix</strong>: <span class="math inline">\(\mathbf{H}\left(f \left(\mathbf{x} \right) \right)\)</span> the matrix of all second derivatives <span class="math display">\[
+H(f(\mathbf{x}))_{i,j} = \frac{\partial^2}{\partial x_i \partial x_j} f(\mathbf{x})
+\]</span></p>
+<p>Anywhere that the second partial derivatives are continuous, <span class="math inline">\(\frac{\partial^2}{\partial x_i \partial x_j} f(\mathbf{x}) = \frac{\partial^2}{\partial x_j \partial x_i} f(\mathbf{x})\)</span>, implying that <span class="math inline">\(H_{i,j}= H_{j,i}\)</span>, meaning that the Hessian is symmetric at such points.</p>
+<ul>
+<li>Most of the functions we will encounter have symmetric Hessian almost everywhere</li>
+<li>because the Hessian matrix is real and symmetric, it can be decomposed into a set of real eigenvalues and an orthogonal basis of eigenvectors
+<ul>
+<li>the second derivative in the direction of a unit vector <span class="math inline">\(\mathbf{d}\)</span> is given by <span class="math inline">\(\mathbf{d}^T \mathbf{Hd}\)</span>
+<ul>
+<li>when <span class="math inline">\(\mathbf{d}\)</span> is an eigenvector of <span class="math inline">\(\mathbf{H}\)</span>, the second derivative in the direction of <span class="math inline">\(\mathbf{d}\)</span> is given by the corresponding eigenvalue</li>
+<li>for other directions, the second derivative is a weighted average of all of the eigenvalues, with weights between 0 and 1</li>
+<li>max eigenvalue <span class="math inline">\(\rightarrow\)</span> max second derivative</li>
+<li>min eigenvalue <span class="math inline">\(\rightarrow\)</span> min second derivative</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>The directional second derivative measures how well a gradient descent step is expected to perform. The second order Taylor series approximation of the function <span class="math inline">\(f(\mathbf{x})\)</span> about the current point <span class="math inline">\(\mathbf{x}^{(0)}\)</span>:</p>
+<p><span class="math display">\[
+f(\mathbf{x}) \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}-\mathbf{x}^{(0)} \right)^T \mathbf{g} + \frac{1}{2} \left(\mathbf{x}-\mathbf{x}^{(0)} \right)^T \mathbf{H} \left(\mathbf{x}-\mathbf{x}^{(0)} \right) \hspace{3em} \mathbf{g} = \nabla_x \left(f \left(\mathbf{x}^{(0)} \right) \right), \hspace{.5em}\mathbf{H} = \mathbf{H} \left(f \left(\mathbf{x}^{(0)} \right) \right)
+\]</span> Using gradient descent, the new point <span class="math inline">\(\mathbf{x} = \mathbf{x}^{(0)} - \epsilon \nabla_x \left( f(\mathbf{x}^{(0)})\right)\)</span>. Substituting this in:</p>
+<p><span class="math display">\[
+\begin{align}
+f(\mathbf{x})                                           &amp; \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}-\mathbf{x}^{(0)} \right)^T \mathbf{g} + \frac{1}{2} \left(\mathbf{x}-\mathbf{x}^{(0)} \right)^T \mathbf{H} \left(\mathbf{x}-\mathbf{x}^{(0)} \right) \\
+f \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} \right)  &amp; \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} -\mathbf{x}^{(0)} \right)^T \mathbf{g} + \frac{1}{2} \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} -\mathbf{x}^{(0)} \right)^T \mathbf{H} \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} -\mathbf{x}^{(0)} \right) \\
+f \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} \right)  &amp; \approx f\left(\mathbf{x}^{(0)}\right) - \epsilon \mathbf{g}^T  \mathbf{g} + \frac{1}{2} \epsilon^2 \mathbf{g}^T \mathbf{H} \mathbf{g} \\
+\text{new value of } f &amp; \approx \text{original value } - \text{expected improvement due to slope } + \text{correction for curvature}
+\end{align}
+\]</span></p>
+<ul>
+<li><span class="math inline">\(\mathbf{g}^T \mathbf{Hg}\)</span> very positive <span class="math inline">\(\rightarrow\)</span> gradient descent step can actually move uphill</li>
+<li><span class="math inline">\(\mathbf{g}^T \mathbf{Hg}\)</span> zero or negative <span class="math inline">\(\rightarrow\)</span> Taylor series approx. predicts that <span class="math inline">\(\epsilon \rightarrow \infty\)</span> will decrease <span class="math inline">\(f\)</span> infinitely
+<ul>
+<li>in practice, must then resort to heuristic choices of <span class="math inline">\(\epsilon\)</span></li>
+</ul></li>
+<li><span class="math inline">\(\mathbf{g}^T \mathbf{Hg}\)</span> positive, then solving for the optimal step size: <span class="math display">\[
+  \epsilon^* = \frac{\mathbf{g}^T \mathbf{g}}{\mathbf{g}^T \mathbf{H} \mathbf{g}}
+  \]</span>
+<ul>
+<li>worst case: <span class="math inline">\(\mathbf{g}\)</span> aligns with the eigenvector of <span class="math inline">\(\mathbf{H}\)</span> corresponding to the maximal eigenvalue <span class="math inline">\(\lambda_{\text{max}}\)</span>
+<ul>
+<li>then, optimal step size <span class="math inline">\(= \frac{1}{\lambda_{\text{max}}}\)</span></li>
+<li>thus, to the extent that the function we minimize can be approximated well by a quadratic function, the eigenvalues of the Hessian determine the scale of the learning rate</li>
+</ul></li>
+</ul></li>
+<li><strong><em>second derivative test</em></strong>: determine whether a critical point is a local maximum, local minimum, or saddle point
+<ul>
+<li>at critical points, <span class="math inline">\(f^{\prime}(x)=0\)</span>
+<ul>
+<li>if <span class="math inline">\(f^{\prime \prime}(x) &gt; 0\)</span>, <span class="math inline">\(f^{\prime}(x)\)</span> increases to the right, and <span class="math inline">\(f^{\prime}(x)\)</span> decreases to the left
+<ul>
+<li>i.e., <span class="math inline">\(f^{\prime}(x-\epsilon) &lt; 0\)</span> and <span class="math inline">\(f^{\prime}(x+\epsilon) &gt; 0\)</span> for small <span class="math inline">\(\epsilon\)</span></li>
+<li>therefore, <span class="math inline">\(x\)</span> is a local minimum</li>
+</ul></li>
+<li>similarly, if <span class="math inline">\(f^{\prime} = 0\)</span> and <span class="math inline">\(f^{\prime \prime}(x) &lt; 0\)</span>, <span class="math inline">\(x\)</span> is a local maximum</li>
+<li>if <span class="math inline">\(f^{\prime \prime} = 0\)</span>, test is inconclusive
+<ul>
+<li><span class="math inline">\(x\)</span> may be a saddle point, or part of a flat region</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>using the eigendecomposition of the Hessian matrix, the second derivative test can be generalized to multiple dimensions
+<ul>
+<li>at critical points, <span class="math inline">\(\nabla_{\mathbf{x}}f(\mathbf{x}) = 0\)</span>
+<ul>
+<li>if Hessian is <strong>positive definite</strong> <span class="math inline">\(\rightarrow\)</span> all eigenvalues positive <span class="math inline">\(\rightarrow\)</span> directional second derivative in any direction is positive <span class="math inline">\(\rightarrow\)</span> <span class="math inline">\(x\)</span> is a <strong>local minimum</strong></li>
+<li>if Hessian is <strong>negative definite</strong> <span class="math inline">\(\rightarrow\)</span> all eigenvalues negative <span class="math inline">\(\rightarrow\)</span> directional second derivative in any direction is positive <span class="math inline">\(\rightarrow\)</span> <span class="math inline">\(x\)</span> is a <strong>local maximum</strong></li>
+<li>if Hessian has <strong>at least one positive eigenvalue and one negative eigenvalue</strong>, <span class="math inline">\(x\)</span> is a local max in at least one dimension and a local min in at least one dimension, and therefore is a <strong>saddle point</strong></li>
+<li>if <strong>all non-zero eigenvalues have the same sign, but at least one eigenvalue is zero, the test is inconclusive</strong> because the univariate second derivative test is inconclusive in the cross section corresponding to the zero eigenvalue</li>
+</ul></li>
+</ul></li>
+<li>in multiple dimensions, there is a different second derivative for each direction
+<ul>
+<li>the <strong><em>condition number</em></strong> of the Hessian measures how much the second derivatives vary
+<ul>
+<li>poor condition number means gradient descent performs poorly, because gradient descent is unaware that it should preferentially explore only in the steep directions
+<ul>
+<li>this also makes it difficult to choose a step size:
+<ul>
+<li>step size must be small to avoid overshooting the minimum and going uphill in directions with strong positive curvature</li>
+<li>this small step size is usually too small to make significant progress in directions with little curvature</li>
+<li>this can be resolved by using the Hessian to guide the search, e.g. with the <strong><em>Newton-Raphson method</em></strong></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>The Newton-Raphson method is based on using the second-order Taylor series expansion to approximate <span class="math inline">\(f(\mathbf{x})\)</span> near some point <span class="math inline">\(\mathbf{x}^{(0)}\)</span> <span class="math display">\[
+f(\mathbf{x}) \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}-\mathbf{x}^{(0)} \right)^T \nabla_{\mathbf{x}} f\left(\mathbf{x}^{(0)} \right) + \frac{1}{2} \left(\mathbf{x}-\mathbf{x}^{(0)} \right)^T \mathbf{H}f\left(\mathbf{x}^{0}\right)\left(\mathbf{x}-\mathbf{x}^{(0)} \right)
+\]</span> Solving for the critical point: <span class="math display">\[
+\mathbf{x}^* = \mathbf{x}^{(0)} - \mathbf{H}f \left(\mathbf{x}^{(0)} \right)^{-1} \nabla_{\mathbf{x}} f \left(\mathbf{x}^{(0)} \right)
+\]</span></p>
+<ul>
+<li>For a positive definite quadratic function, Newton’s method arrives at the minimum in one step</li>
+<li>if <span class="math inline">\(f\)</span> is not truly quadratic but can be locally approximated as positive definite quadratic, Newton’s method is iteratively applied
+<ul>
+<li>this can arrive at the minimum much faster than gradient descent
+<ul>
+<li>this is useful near a local minimum, but can be harmful near a saddle point</li>
+<li>Newton’s method is only appropriate when the nearby critical point is a minimum
+<ul>
+<li>in contrast, gradient descent is not attracted to saddle points unless the gradient points toward them</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>gradient descent is a <strong><em>first order optimization algorithm</em></strong></li>
+<li>methods such as the Newton-Raphson method that take the Hessian into account are called <strong><em>second order optimization algorithms</em></strong></li>
+</ul>
+<p>Optimization algorithms come with almost no guarantees, because the family of functions encountered is very complicated</p>
+<ul>
+<li>in deep learning, can sometimes gain some guarantees by restricting to functions that are <strong><em>Lipschitz continuous</em></strong> or have Lipschitz continuous derivatives
+<ul>
+<li>a Lipschitz continuous function is a function <span class="math inline">\(f\)</span> whose rate of change is bounded by a <strong><em>Lipschitz constant</em></strong> <span class="math inline">\(\mathcal{L}\)</span>: <span class="math display">\[
+  \forall \mathbf{x}, \mathbf{y}, \hspace{.8em} \lvert f(\mathbf{x})- f(\mathbf{y})\rvert \leq \mathcal{L} \lVert \mathbf{x}-\mathbf{y}\rVert_2
+  \]</span></li>
+<li>this allows us to quantify the assumption that a small change in the input made by an algorithm such as gradient descent will have a small change in the output
+<ul>
+<li>Lipschitz continuity is also a fairly weak constraint</li>
+<li>many optimization problems in deep learning can be made Lipschitz continuous with relatively minor modifications</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>The most succesful field of specialized optimization is <strong><em>convex optimization</em></strong></p>
+<ul>
+<li>convex optimization algorithms are able to provide more guarantees by making stronger restrictions
+<ul>
+<li>applicable only to convex functions, i.e. functions for which the Hessian is positive semidefinite everywhere
+<ul>
+<li>these functions are well-behaved:
+<ul>
+<li>they lack saddle points</li>
+<li>all local minima are necessarily global minima</li>
+</ul></li>
+</ul></li>
+<li>most problems in deep learning are difficult to express in terms of convex optimization
+<ul>
+<li>used only as a subroutine of some DL algorithms</li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+<div id="dl-4.4-constrained-optimization" class="section level2">
+<h2><strong>DL 4.4 Constrained Optimization</strong></h2>
+<ul>
+<li><strong><em>constrained optimization</em></strong>: optimizing <span class="math inline">\(f(\mathbf{x})\)</span> for values of <span class="math inline">\(x\)</span> in some set <span class="math inline">\(\mathbb{S}\)</span>
+<ul>
+<li><strong><em>feasible points</em></strong>: points <span class="math inline">\(x\)</span> in the set <span class="math inline">\(\mathbb{S}\)</span></li>
+</ul></li>
+<li>often wish to find a solution that is “small” in some sense
+<ul>
+<li>common solution is a norm constraint, e.g. <span class="math inline">\(\lVert \mathbf{x} \rVert \leq 1\)</span></li>
+</ul></li>
+<li>the <strong><em>Karush-Kuhn-Tucker</em></strong> (KKT) approach: a very general solution to constrained optimization
+<ul>
+<li>design a different, unconstrained optimization problem whose solution can be converted into a solution to the original, constrained optimization problem</li>
+<li>do this by introducing a new function- the <strong><em>generalized Lagrangian</em></strong> or <strong><em>generalized Lagrange function</em></strong>
+<ul>
+<li>first, describe <span class="math inline">\(\mathbb{S}\)</span> in terms of <span class="math inline">\(m\)</span> functions <span class="math inline">\(g^{(i)}\)</span> and <span class="math inline">\(n\)</span> functions <span class="math inline">\(h^{(j)}\)</span> such that <span class="math display">\[
+  \mathbb{S} = \left\{\mathbf{x} \mid \begin{cases}
+                                  \forall i, g^{(i)} (\mathbf{x}) = 0 &amp; \text{equality constraints}\\
+                                  \forall j, h^{(j)} (\mathbf{x}) \leq 0 &amp; \text{inequality constraints}
+                                  \end{cases}
+                                  \right\}
+  \]</span></li>
+<li>introduce KKT multipliers <span class="math inline">\(\lambda_i\)</span> and <span class="math inline">\(\alpha_j\)</span> for each constraint, then define the generalized Lagrangian: <span class="math display">\[
+  L (\mathbf{x}, \lambda, \alpha) = f(\mathbf{x}) + \sum_i \lambda_i g^{(i)}(\mathbf{x}) + \sum_{j}\alpha_j h^{(j)}(\mathbf{x})
+  \]</span></li>
+<li>consider the following quantity: <span class="math display">\[
+  \min_x \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha),
+  \]</span> which has the same optimal function value and optimal points <span class="math inline">\(\mathbf{x}\)</span> as <span class="math display">\[
+  \min_{\mathbf{x}\in \mathbb{S}} f(\mathbf{x})
+  \]</span></li>
+</ul></li>
+</ul></li>
+</ul>
 </div>
 
 
