@@ -127,6 +127,16 @@ $(document).ready(function () {
 <li><a href="#the-experience-e"><strong>5.1.3 The Experience, <span class="math inline">\(E\)</span></strong></a></li>
 </ul></li>
 <li><a href="#capacity-overfitting-and-underfitting"><strong>5.2 Capacity, Overfitting and Underfitting</strong></a></li>
+<li><a href="#hyperparameters-and-validation-sets"><strong>5.3 Hyperparameters and Validation Sets</strong></a><ul>
+<li><a href="#cross-validation"><strong>5.3.1 Cross-Validation</strong></a></li>
+</ul></li>
+<li><a href="#estimators-bias-and-variance"><strong>5.4 Estimators, Bias, and Variance</strong></a><ul>
+<li><a href="#point-estimation"><strong>5.4.1 Point Estimation</strong></a></li>
+<li><a href="#bias"><strong>5.4.2 Bias</strong></a></li>
+<li><a href="#variance-and-standard-error"><strong>5.4.3 Variance and Standard Error</strong></a></li>
+<li><a href="#trading-off-bias-and-variance-to-minimize-mean-squared-error"><strong>5.4.4 Trading off Bias and Variance to Minimize Mean Squared Error</strong></a></li>
+<li><a href="#consistency"><strong>5.4.5 Consistency</strong></a></li>
+</ul></li>
 <li><a href="#maximum-likelihood-estimation"><strong>5.5 Maximum Likelihood Estimation</strong></a></li>
 <li><a href="#support-vector-machines"><strong>5.7.2 Support Vector Machines</strong></a></li>
 <li><a href="#stochastic-gradient-descent"><strong>5.9 Stochastic Gradient Descent</strong></a></li>
@@ -136,7 +146,7 @@ $(document).ready(function () {
 </div>
 
 <p>Notes on chapter 5 of the <a href="www.deeplearningbook.org">Deep Learning Book</a> on Machine Learning Basics.</p>
-<p>Machine learning: a form of applied statistics with increased emphasis on the use of computers to statistically estimate complicated functions and a decreased emphasis on proving confidence intervals around these functions.</p>
+<p><strong><em>Machine learning</em></strong>: a form of applied statistics with increased emphasis on the use of computers to statistically estimate complicated functions and a decreased emphasis on proving confidence intervals around these functions.</p>
 <div id="learning-algorithms" class="section level2">
 <h2><strong>5.1 Learning Algorithms</strong></h2>
 <blockquote>
@@ -144,7 +154,13 @@ $(document).ready(function () {
 </blockquote>
 <div id="the-task-t" class="section level3">
 <h3><strong>5.1.1 The Task, <span class="math inline">\(T\)</span></strong></h3>
-<p>Learning is <em>not</em> the task. Learning is the means of attaining the ability to perform the task. E.g., in training a robot to walk, the task is walking. This could be accomplished by writing a program specifying how to walk, or by programming the robot to learn how to walk.</p>
+<p>Learning is <em>not</em> the task. <strong><em>Learning</em></strong> is the means of attaining the ability to perform the task.</p>
+<ul>
+<li>E.g., in training a robot to walk, the task is walking.
+<ul>
+<li>This could be accomplished by writing a program specifying how to walk, or by programming the robot to learn how to walk.</li>
+</ul></li>
+</ul>
 <p>ML tasks are usually described in how the system should process an <strong><em>example</em></strong>- a collection of <strong><em>features</em></strong> that have been quantitatively measured from some object or event that we want the system to process. An example is typically represented as a vector <span class="math inline">\(\mathbf{x} \in \mathbb{R}^n\)</span>, where each entry <span class="math inline">\(x_i\)</span> of the vector is another feature.</p>
 <p>Common ML tasks:</p>
 <ul>
@@ -175,7 +191,7 @@ $(document).ready(function () {
 <p><strong><em>Unsupervised learning</em></strong>– experience a dataset containing many features, and learn useful properties of the structure of the dataset. (Learn <span class="math inline">\(p(\mathbf{x})\)</span> by observing examples of <span class="math inline">\(\mathbf{x}\)</span>).</p>
 <p><strong><em>Supervised learning</em></strong>– experience a dataset containing features, where each example has a <strong><em>label</em></strong> or <strong><em>target</em></strong>. (Learn to predict <span class="math inline">\(\mathbf{y}\)</span> from <span class="math inline">\(\mathbf{x}\)</span>, usually by estimating <span class="math inline">\(p(\mathbf{y} \mid \mathbf{x})\)</span> from several examples of <span class="math inline">\(\mathbf{x}\)</span> and <span class="math inline">\(\mathbf{y}\)</span>).</p>
 <p>Unsupervised learning/supervised learning are not formally defined or completely separate. From the chain rule of probability: <span class="math display">\[
-\forall \mathbf{x} \in \mathbb{R}^n, \quad p(\mathbb{x}) = \prod_{i=1}^{n} p(x_i \mid x_1, \dots, x_{i-1})
+\forall \mathbf{x} \in \mathbb{R}^n, \quad p(\mathbf{x}) = \prod_{i=1}^{n} p(x_i \mid x_1, \dots, x_{i-1})
 \]</span> , meaning that the unsupervised problem of modeling <span class="math inline">\(p(\mathbf{x})\)</span> could be split into <span class="math inline">\(n\)</span> supervised learning problems. Alternatively the supervised learning problem of learning <span class="math inline">\(p(y \mid \mathbf{x})\)</span> could be solved using unsupervised learning to learn the joint distribution <span class="math inline">\(p(\mathbf{x}, y)\)</span> and inferring: <span class="math display">\[
 p(y \mid \mathbf{x}) = \frac{p(\mathbf{x},y)}{\sum_{y^\prime}p(\mathbf{x}, y^\prime)}
 \]</span></p>
@@ -185,9 +201,23 @@ p(y \mid \mathbf{x}) = \frac{p(\mathbf{x},y)}{\sum_{y^\prime}p(\mathbf{x}, y^\pr
 </div>
 <div id="capacity-overfitting-and-underfitting" class="section level2">
 <h2><strong>5.2 Capacity, Overfitting and Underfitting</strong></h2>
-<p>What separates machine learning from optimization is that we want the <strong><em>generalization/test error</em></strong> to be low, not just the training error. Generalization error– the expected value of the error on a new input, where the expectation is across different possible inputs drawn from the distribution of inputs we expect the system to encounter in practice.</p>
+<p>What separates machine learning from optimization is that we want the <strong><em>generalization/test error</em></strong> to be low, not just the training error.</p>
+<ul>
+<li><strong><em>Generalization error</em></strong>
+<ul>
+<li>the expected value of the error on a new input, where the expectation is across different possible inputs drawn from the distribution of inputs we expect the system to encounter in practice.</li>
+</ul></li>
+</ul>
 <p>To affect test set performance while only observing the training set, need to make some assumptions about how the training and test sets are collected in order to apply statistical learning theory.</p>
-<p>The train and test data are generated by a probability distribution over datasets– the <strong><em>data generating process</em></strong>. We make a set of assumptions known as the <strong><em>i.i.d assumptions</em></strong>: The examples in each dataset are <em>independent</em> from each other, and the train and test set are <em>identically distributed</em>, i.e. dawn from the same probability distribution as each other. The same underlying distribution, known as the <strong><em>data generating distribution</em></strong> <span class="math inline">\(p_{\text{data}}\)</span>, generates every train and test example.</p>
+<p>The train and test data are generated by a probability distribution over datasets– the <strong><em>data generating process</em></strong>. We make a set of assumptions known as the <strong><em>i.i.d assumptions</em></strong>:</p>
+<ul>
+<li>the examples in each dataset are <em>independent</em> from each other</li>
+<li>train and test set are <em>identically distributed</em>
+<ul>
+<li>i.e. drawn from the same probability distribution as each other</li>
+<li>The same underlying distribution, known as the <strong><em>data generating distribution</em></strong> <span class="math inline">\(p_{\text{data}}\)</span>, generates every train and test example.</li>
+</ul></li>
+</ul>
 <p>In using a ML algorithm, we sample the training set, use it to choose parameters to reduce training set error, then sample the test set. Under this process, expected test error <span class="math inline">\(\geq\)</span> expected training error. Factors determining how well a ML algorithm will perform are its ability to:</p>
 <ul>
 <li>make the training error small</li>
@@ -197,6 +227,232 @@ p(y \mid \mathbf{x}) = \frac{p(\mathbf{x},y)}{\sum_{y^\prime}p(\mathbf{x}, y^\pr
 <p>Under- vs. overfitting is controlled by a model’s <strong><em>capacity</em></strong> (flexibility/degrees of freedom, etc.). ML algorithms generally perform best when their capacity is appropriate for the true complexity of the task they need to perform and the amount of training data provided.</p>
 <p><strong><em>Representational capacity</em></strong>– determined by the family of functions to choose from when varying parameters <strong><em>Effective capacity</em></strong>– the actual capacity of the algorithm, limited by the imperfection of optimization</p>
 <p>The most well-known means of quantifying model capacity is the <strong><em>Vapnik-Chervonenkis dimension</em></strong>, or VC dimension. The VC dimension measures the capacity of a binary classifier, and is defined as being the largest possible value of <span class="math inline">\(m\)</span> for which there exists a training set of <span class="math inline">\(m\)</span> different <span class="math inline">\(\mathbf{x}\)</span> points that the classifier can label arbitrarily.</p>
+</div>
+<div id="hyperparameters-and-validation-sets" class="section level2">
+<h2><strong>5.3 Hyperparameters and Validation Sets</strong></h2>
+<ul>
+<li><strong><em>hyperparameters</em></strong>
+<ul>
+<li>parameters which control the behavior of the learning algorithm</li>
+<li>not adapted by the learning algorithm itself
+<ul>
+<li>although, possible to design nested learning procedure where one algorithm learns the best hyperparameters for another</li>
+</ul></li>
+<li>e.g.:
+<ul>
+<li>in polynomial regression, the degree of the polynomial is a <em>capacity</em> hyperparameter</li>
+<li><span class="math inline">\(\lambda\)</span> in weight decay (L2 regularization)</li>
+</ul></li>
+<li>hyperparameters may be chosen and not learned because they are difficult to optimize
+<ul>
+<li>more often, it is not appropriate to learn the hyperparameter on the training set (also see discussion of bias-variance tradeoff in ESL)
+<ul>
+<li>this applies to all hyperparameters controlling model capacity (aka flexibility, degrees of freedom)
+<ul>
+<li>if learned on the training set, the hyperparameter would always be set to the maximum capacity, resulting in overfitting</li>
+</ul></li>
+</ul></li>
+<li>to address this, need to set hyperparameters based on a <strong><em>validation set</em></strong> not observed during training of the algorithm
+<ul>
+<li>the validation set needs to be distinct from the test set, since no aspects of the model, including hyperparameters, should be determined based on the test set
+<ul>
+<li>therefore, the validation set is a subset of of the training data</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<div id="cross-validation" class="section level3">
+<h3><strong>5.3.1 Cross-Validation</strong></h3>
+<ul>
+<li>dividing a dataset into a fixed training and test set can be problematic if it the resulting test set is small
+<ul>
+<li>small test set implies statistical uncertainty around the estimated average test error
+<ul>
+<li>makes it difficult to claim that one algorithm performs better than another on a given task</li>
+</ul></li>
+<li>alternatively, can repeating training and testing on randomly chosen subsets of the dataset
+<ul>
+<li>most commonly, <strong><em><span class="math inline">\(k\)</span>-fold cross-validation</em></strong> is used:
+<ul>
+<li>split dataset into <span class="math inline">\(k\)</span> disjoint subsets</li>
+<li>estimate test error by taking the average test error across <span class="math inline">\(i\)</span> trials
+<ul>
+<li>on trial <span class="math inline">\(i\)</span>, the <span class="math inline">\(i\)</span>-th subset is used as the test set and the other <span class="math inline">\(i-1\)</span> subsets are used as the training set</li>
+</ul></li>
+</ul></li>
+<li>no unbiased estimators of the variance of these average error estimators exist, but approximations are typically used</li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+<div id="estimators-bias-and-variance" class="section level2">
+<h2><strong>5.4 Estimators, Bias, and Variance</strong></h2>
+<p>Statistical concepts such as <strong><em>parameter estimation</em></strong>, <strong><em>bias</em></strong>, and <strong><em>variance</em></strong> are useful to formally characterize the machine learning concepts of <strong><em>generalization</em></strong>, <strong><em>underfitting</em></strong>, and <strong><em>overfitting</em></strong>.</p>
+<div id="point-estimation" class="section level3">
+<h3><strong>5.4.1 Point Estimation</strong></h3>
+<ul>
+<li><strong><em>point estimation</em></strong>: the attempt to provide the single “best” prediction of some quantity of interest
+<ul>
+<li>e.g. a single parameter, a vector of parameters, or even a whole function</li>
+<li>notation: denote estimates with hats, e.g. <span class="math inline">\(\hat{\theta}\)</span> is an estimate of the true value <span class="math inline">\(\theta\)</span></li>
+<li>let <span class="math inline">\(\mathbf{x}^{(1)}, \dots, \mathbf{x}^{(m)}\)</span> be a set of <span class="math inline">\(m\)</span> i.i.d data points
+<ul>
+<li>a <strong><em>point estimator</em></strong> or <strong><em>statistic</em></strong> is any function of the data: <span class="math display">\[
+  \hat{\theta}_m = g \left(\mathbf{x}^{(1)}, \dots, \mathbf{x}^{(m)} \right)
+  \]</span>
+<ul>
+<li>this definition is very general: <span class="math inline">\(g\)</span> is not required to return a value close to the true value <span class="math inline">\(\theta\)</span>, or to even return a value limited to the set of allowed values of <span class="math inline">\(\theta\)</span></li>
+<li>the frequentist perspective: the true parameter value <span class="math inline">\(\theta\)</span> is fixed but unknown, while <span class="math inline">\(\hat{\theta}\)</span> is a function of the data
+<ul>
+<li>since the data is drawn from a random process, any function of the data is random
+<ul>
+<li>therefore, <span class="math inline">\(\hat{\theta}\)</span> is a random variable</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>point estimation can also refer to the estimation of the relationship between input and target variables, i.e. <strong><em>function estimation</em></strong>.</li>
+</ul></li>
+</ul></li>
+<li><strong><em>function estimation</em></strong>: trying to predict a variable <span class="math inline">\(\mathbf{y}\)</span> given an input vector <span class="math inline">\(\mathbf{x}\)</span>
+<ul>
+<li>assume there is a function f() describing the approximate relationship between <span class="math inline">\(\mathbf{y}\)</span> and <span class="math inline">\(\mathbf{x}\)</span>
+<ul>
+<li>e.g. <span class="math inline">\(\mathbf{y} = f(\mathbf{x}) + \epsilon\)</span>, where <span class="math inline">\(\epsilon\)</span> represents the part of <span class="math inline">\(\mathbf{y}\)</span> not predictable from <span class="math inline">\(\mathbf{x}\)</span></li>
+</ul></li>
+<li>we are interested in approximating <span class="math inline">\(f\)</span> with a model/estimate <span class="math inline">\(\hat{f}\)</span>
+<ul>
+<li><span class="math inline">\(\hat{f}\)</span> is really just a point estimator in function space
+<ul>
+<li>e.g., linear regression can be interpreted as estimating a parameter <span class="math inline">\(\mathbf{w}\)</span> or estimating a function <span class="math inline">\(\hat{f}\)</span> mapping <span class="math inline">\(\mathbf{x}\)</span> to <span class="math inline">\(y\)</span></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>Now for commonly studied properties of point estimators</p>
+</div>
+<div id="bias" class="section level3">
+<h3><strong>5.4.2 Bias</strong></h3>
+<p>Def <strong><em>bias</em></strong>: <span class="math display">\[
+\text{bias} \left( \hat{\theta}_m \right) = \text{E} \left(\hat{\theta}_m \right) - \theta
+\]</span></p>
+<ul>
+<li>the expectation is over the data (seen as samples from a random variable)</li>
+<li>an estimator <span class="math inline">\(\hat{\theta}_m\)</span> is:
+<ul>
+<li><strong><em>unbiased</em></strong> if <span class="math inline">\(\text{bias}(\hat{\theta}_m) = 0\)</span>
+<ul>
+<li>i.e., <span class="math inline">\(\text{E} \left(\hat{\theta}_m \right) = \theta\)</span></li>
+</ul></li>
+<li><strong><em>asymptotically unbiased</em></strong> if <span class="math inline">\(\lim_{m \to \infty} \text{bias} \left(\hat{\theta}_m \right) = 0\)</span>
+<ul>
+<li>i.e., <span class="math inline">\(\lim_{m \to \infty} \text{E} \left(\hat{\theta}_m \right)\)</span></li>
+</ul></li>
+</ul></li>
+<li>unbiased estimators are clearly desirable, but are not always the “best”
+<ul>
+<li>we may take an increase in bias if it is results in a reduction in variance</li>
+</ul></li>
+</ul>
+</div>
+<div id="variance-and-standard-error" class="section level3">
+<h3><strong>5.4.3 Variance and Standard Error</strong></h3>
+<p>How much do we expect an estimator to vary as a function of the data sample?</p>
+<p>The <strong><em>variance</em></strong> of an estimator is simply the variance (thanks for this amazing insight, Deep Learning Book!): <span class="math display">\[
+\begin{align}
+\text{Var} \left(\hat{\theta} \right) &amp; = \text{E} \left[ \left(\hat{\theta} - \text{E} \left[ \hat{\theta}\right]\right)^2\right] \\
+                                      &amp; = \text{E} \left[\hat{\theta}^2 \right] - \text{E}^2 \left[\hat{\theta} \right]
+\end{align}
+\]</span> where the random variable is the training set.</p>
+<p>Def <strong><em>standard error</em></strong>: <span class="math inline">\(\text{SE} \left(\hat{\theta} \right) = \sqrt{\text{Var}\left(\hat{\theta} \right)}\)</span>.</p>
+<p>Variance or standard error of an estimator provides a measure of how we would expect the estimate computed from data to vary as we independently resample the dataset from the underlying data generating process. It is desirable to have an estimator with low variance.</p>
+<p>The <strong><em>standard error of the mean</em></strong>: <span class="math display">\[
+\text{SE} \left(\hat{\mu}_m \right) = \sqrt{\text{Var} \left[\frac{1}{m} \sum_{i=1}^m x^{(i)}\right]} = \frac{\sigma}{\sqrt{m}},
+\]</span> where <span class="math inline">\(\sigma^2\)</span> is the true variance of the samples <span class="math inline">\(x^i\)</span>. The standard error is often estimated by using an estimate of <span class="math inline">\(\sigma\)</span>. Neither the square root of the sample variance nor the square root of the unbiased estimator of the variance provide an unbiased estimate of the standard deviation. Both approaches tend to underestimate the true standard deviation, but are still used in practice. The square root of the unbiased estimator of the variance is less of an underestimate. For large <span class="math inline">\(m\)</span>, the approximation is quite reasonable.</p>
+<ul>
+<li>SEM is often useful in ML: the generalization error is often estimated by computing the sample mean of the test set error
+<ul>
+<li>the accuracy of this estimate is determined by the size of the test set</li>
+<li>taking advantage of the central limit theorem (i.e., the mean is approxiamtely distributed with a normal distribution), the standard error can be used to compute the probability that the true expectation falls in any chosen interval (think 95% confidence intervals).
+<ul>
+<li>in ML, it is common to say that an algorithm is better than another if the upper bound of the 95% CI for error of the first algorithm is less than the lower bound of the 95% CI of the other</li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="trading-off-bias-and-variance-to-minimize-mean-squared-error" class="section level3">
+<h3><strong>5.4.4 Trading off Bias and Variance to Minimize Mean Squared Error</strong></h3>
+<ul>
+<li>bias and variance measure two different sources of error in an estimator
+<ul>
+<li>bias measures the expected deviation from the true value of the function or parameter</li>
+<li>variance measures the deviation from the expected estimator value that any particular sampling of the data is likely to cause</li>
+</ul></li>
+<li>balancing bias and variance when choosing an estimator
+<ul>
+<li>one way to choose is by cross-validation (empirically, highly successful)</li>
+<li>alternatively, compare the <strong><em>mean squared error</em></strong> (MSE) of the estimates: <span class="math display">\[
+  \begin{align}
+  \text{MSE}  &amp; = \text{E} \left[\left(\hat{\theta}_m- \theta \right)^2 \right] \\
+          &amp; = \text{E} \left[\left(\hat{\theta} - \text{E} \left[ \hat{\theta}\right] + \text{E} \left[\hat{\theta}\right] - \theta \right)^2 \right] \\
+          &amp; = \text{E} \left[\left(\hat{\theta} - \text{E} \left[ \hat{\theta} \right] \right)^2 + \left(\text{E} \left[\hat{\theta} \right] - \theta \right)^2 + 2 \left(\hat{\theta} - \text{E} \left[ \hat{\theta} \right] \right) \left(\text{E} \left[\hat{\theta} \right] - \theta \right)\right] \\
+          &amp; = \text{E} \left[\left(\hat{\theta} - \text{E} \left[ \hat{\theta} \right] \right)^2 \right] + \text{E} \left[\left(\text{E} \left[\hat{\theta} \right] - \theta \right)^2 \right] +2 \text{E} \left[\left(\hat{\theta} - \text{E} \left[ \hat{\theta} \right] \right) \left(\text{E} \left[\hat{\theta} \right] - \theta \right)  \right] \\
+          &amp; = \text{E} \left[\left(\hat{\theta} - \text{E} \left[ \hat{\theta} \right] \right)^2 \right] + \left(\text{E} \left[\hat{\theta} \right] - \theta \right)^2  +2\left(\text{E}\left[\hat{\theta}\right] - \text{E} \left[ \hat{\theta} \right] \right) \left(\text{E} \left[\hat{\theta} \right] - \theta \right)  \\
+          &amp; = \text{Var}\left(\hat{\theta} \right) + \text{Bias}^2 \left(\hat{\theta} \right)
+          \end{align}
+  \]</span></li>
+<li>From the <strong><em>bias-variance decomposition</em></strong> above, it is clear that the MSE incorporates both the bias and the variance
+<ul>
+<li>estimators with small MSE therefore manage to keep both their bias and variance somewhat in check</li>
+</ul></li>
+<li>the <strong><em>bias-variance trade-off</em></strong>: increasing the capacity/flexibility of a model tends to increase variance and decrease bias</li>
+</ul></li>
+</ul>
+</div>
+<div id="consistency" class="section level3">
+<h3><strong>5.4.5 Consistency</strong></h3>
+<ul>
+<li>we are also concerned with the behaviors of estimators as the amount of training data grows
+<ul>
+<li>(weak) <strong><em>consistency</em></strong>: as the number of data points <span class="math inline">\(m\)</span> in the dataset grows, the point estimates should converge to the true value of the corresponding parameters. Formally:</li>
+</ul>
+<span class="math display">\[
+  \begin{align}
+  \lim_{m \to \infty} \hat{\theta}_m &amp; \overset{p}{\rightarrow} \theta \\
+  \\
+  &amp; \overset{p}{\rightarrow} \quad \text{indicates convergence in probability, i.e.}\\
+  &amp; \hspace{4em} \text{for any } \epsilon &gt; 0, \\
+  &amp; \hspace{4em} P \left(\left\lvert \hat{\theta}_m - \theta \right\rvert &gt; \epsilon \right)\to 0 \quad \text{as} \quad m \to \infty
+  \end{align}
+  \]</span>
+<ul>
+<li>strong consistency refers to the <em>almost sure</em> convergence of <span class="math inline">\(\hat{\theta}\)</span> to <span class="math inline">\(\theta\)</span>
+<ul>
+<li><em>almost sure</em> convergence of a sequence of random variables <span class="math inline">\(\mathbf{x}^{(1)}, \mathbf{x}^{(2)}, \dots\)</span> to a value <span class="math inline">\(\mathbf{x}\)</span> occurs when: <span class="math display">\[
+  p\left(\lim_{m \to \infty} \mathbf{x}^{(m)}= \mathbf{x} \right) = 1
+  \]</span></li>
+</ul></li>
+<li>consistency ensures that the bias induced by the estimator will diminish as the number of data examples grows
+<ul>
+<li>the reverse is not true: asymptotic unbiasedness does <strong>not</strong> imply consistency
+<ul>
+<li>e.g. consider estimating the mean parameter <span class="math inline">\(\mu\)</span> of a normal distribution <span class="math inline">\(\mathcal{N} \left(x; \mu, \sigma^2 \right)\)</span> with a dataset consisting of <span class="math inline">\(m\)</span> samples: <span class="math inline">\(\left\{x^{(1)}, \dots, x^{(m)} \right\}\)</span>
+<ul>
+<li><span class="math inline">\(x^{(1)}\)</span>, the first example of the dataset <em>could</em> be used as an estimator: <span class="math inline">\(\hat{\theta} = x^{(1)}\)</span>
+<ul>
+<li><span class="math inline">\(\text{E} \left[\hat{\theta}_m \right] = \theta\)</span>, so the estimator is unbiased no matter how many data points are seen
+<ul>
+<li>therefore, the estiamte is asymptotically unbiased</li>
+<li>however, it is <strong>not</strong> a consistent estimator, since it is <strong>not</strong> the case that <span class="math inline">\(\hat{\theta}_m \to \theta\)</span> as <span class="math inline">\(m \to \infty\)</span>.</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
 </div>
 <div id="maximum-likelihood-estimation" class="section level2">
 <h2><strong>5.5 Maximum Likelihood Estimation</strong></h2>

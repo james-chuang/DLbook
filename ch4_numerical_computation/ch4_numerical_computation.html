@@ -147,7 +147,7 @@ $(document).ready(function () {
 \begin{align}
 \text{softmax}(Z)_i &amp; = \frac{\exp(x_i- \max_i{x_i})}{\sum_{j=1}^n \exp(x_j-\max_i{x_i})} \\
                     &amp; = \frac{\frac{\exp(x_i)}{\exp(\max_i{x_i})}}{\sum_{j=1}^n{\frac{\exp(x_j)}{\exp(\max_i x_i)}}} \\
-                    &amp; = \frac{\frac{\exp(x_i)}{\exp(\max_i{x_i})}}  {{ \frac{\sum_{j=1}^n \exp(x_j)}{\exp(\max_i x_i)}}} \\
+                    &amp; = \frac{\frac{\exp(x_i)}{\exp(\max_i{x_i})}}  { \frac{\sum_{j=1}^n \exp(x_j)}{\exp(\max_i x_i)}} \\
                     &amp; = \frac{\exp(x_i)}{\sum_{j=1}^n \exp(x_j)} \\
 \text{softmax}(Z)_i &amp; = \text{softmax}(X)_i 
 \end{align}
