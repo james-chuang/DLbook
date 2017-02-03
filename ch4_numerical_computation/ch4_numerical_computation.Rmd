@@ -99,7 +99,7 @@ second derivatives indicate *curvature*
   - important because it tells us whether a gradient step will cause as much of an improvement as we would expect based on the gradient alone
   - $f^{\prime \prime}(x) = 0$: no curvature, value can be predicted using only the gradient
   - $f^{\prime \prime}(x) < 0$: function curves downward, so cost function decreases by more than $\epsilon$
-  - $f^{\prime \prime}(x) > 0$: function curves upward, so cost function decreses by less than $\epsilon$
+  - $f^{\prime \prime}(x) > 0$: function curves upward, so cost function decreases by less than $\epsilon$
     
 **Hessian matrix**: $\mathbf{H}\left(f \left(\mathbf{x} \right) \right)$ the matrix of all second derivatives
 $$
@@ -154,7 +154,7 @@ $$
   - using the eigendecomposition of the Hessian matrix, the second derivative test can be generalized to multiple dimensions
       - at critical points, $\nabla_{\mathbf{x}}f(\mathbf{x}) = 0$
           - if Hessian is **positive definite** $\rightarrow$ all eigenvalues positive $\rightarrow$ directional second derivative in any direction is positive $\rightarrow$ $x$ is a **local minimum** 
-          - if Hessian is **negative definite** $\rightarrow$ all eigenvalues negative $\rightarrow$ directional second derivative in any direction is positive $\rightarrow$ $x$ is a **local maximum**
+          - if Hessian is **negative definite** $\rightarrow$ all eigenvalues negative $\rightarrow$ directional second derivative in any direction is negative $\rightarrow$ $x$ is a **local maximum**
           - if Hessian has **at least one positive eigenvalue and one negative eigenvalue**, $x$ is a local max in at least one dimension and a local min in at least one dimension, and therefore is a **saddle point**
           - if **all non-zero eigenvalues have the same sign, but at least one eigenvalue is zero, the test is inconclusive** because the univariate second derivative test is inconclusive in the cross section corresponding to the zero eigenvalue
   - in multiple dimensions, there is a different second derivative for each direction
@@ -194,7 +194,7 @@ Optimization algorithms come with almost no guarantees, because the family of fu
           - Lipschitz continuity is also a fairly weak constraint
           - many optimization problems in deep learning can be made Lipschitz continuous with relatively minor modifications
 
-The most succesful field of specialized optimization is ***convex optimization***
+The most successful field of specialized optimization is ***convex optimization***
 
   - convex optimization algorithms are able to provide more guarantees by making stronger restrictions
       - applicable only to convex functions, i.e. functions for which the Hessian is positive semidefinite everywhere
@@ -216,10 +216,10 @@ The most succesful field of specialized optimization is ***convex optimization**
           - first, describe $\mathbb{S}$ in terms of $m$ functions $g^{(i)}$ and $n$ functions $h^{(j)}$ such that
           
           $$
-          \mathbb{S} = \left\{\mathbf{x} \mid \begin{cases}
-                                              \forall i, g^{(i)} (\mathbf{x}) = 0 & \text{equality constraints}\\
-                                              \forall j, h^{(j)} (\mathbf{x}) \leq 0 & \text{inequality constraints}
-                                              \end{cases}
+          \mathbb{S} = \left\{\mathbf{x} \mid \begin{aligned}
+                                              & \forall i, g^{(i)} (\mathbf{x}) = 0     && \text{equality constraints}\\
+                                              & \forall j, h^{(j)} (\mathbf{x}) \leq 0  && \text{inequality constraints}
+                                              \end{aligned}
                                               \right\}
           $$
           - introduce KKT multipliers $\lambda_i$ and $\alpha_j$ for each constraint, then define the generalized Lagrangian:
@@ -259,7 +259,7 @@ The most succesful field of specialized optimization is ***convex optimization**
           - all constraints on both $x$ and the KKT multipliers are satisfied
           - $\alpha \odot \mathbf{h}(\mathbf{x}) = \mathbf{0}$
           
-## **4.5 Example: Linear Least Squares**
+## **DL 4.5 Example: Linear Least Squares**
 
 Minimize the squared error loss function
 $$
@@ -282,7 +282,7 @@ $$
 
 Pseudocode for minimization by gradient descent:
 
-  - intiialize step size $\epsilon$ and convergence tolerance $\delta$ to small, positive numbers
+  - initialize step size $\epsilon$ and convergence tolerance $\delta$ to small, positive numbers
   - **while** $\lVert \mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b} \rVert_2 > \delta$ **do**
       - $\mathbf{x} \gets \mathbf{x} - \epsilon \left(\mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b} \right)$
 
@@ -316,9 +316,9 @@ $$
 L(\mathbf{x}, \lambda) &= \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] + \lambda \mathbf{x}^T \mathbf{x} - \lambda \\
 \frac{\partial}{\partial \lambda} L \left(\mathbf{x}, \lambda \right) & = \mathbf{x}^T \mathbf{x} - 1 \\
 \\
-& \begin{cases}
-\mathbf{x}^T \mathbf{x} > 1 \quad\rightarrow  \quad \frac{\partial L}{\partial \lambda} > 1 \quad \rightarrow \text{gradient ascent increases } \lambda \\
-\mathbf{x}^T \mathbf{x} > 1 \quad\rightarrow  \quad \frac{\partial L}{\partial \lambda} > 1 \quad \rightarrow \text{gradient ascent increases } \lambda 
-\end{cases}
+& 
+\text{if} \quad \mathbf{x}^T \mathbf{x} > 1 \quad\rightarrow  \quad \frac{\partial L}{\partial \lambda} > 0 \quad \rightarrow \text{gradient ascent increases } \lambda
 \end{align}
 $$
+
+An increased $\lambda$ means the weight of the $\mathbf{x}^T \mathbf{x}$ penalty in the Lagrangian has increased. Therefore, solving for $\mathbf{x}$ will then yield a solution with a smaller norm. The process of solving the linear equation and adjusting $\lambda$ continues until $\mathbf{x}$ has the correct norm and the derivative on $\lambda$ is 0.

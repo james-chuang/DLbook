@@ -127,7 +127,7 @@ $(document).ready(function () {
 <li><a href="#dl-4.3.1-jacobian-and-hessian-matrices"><strong>DL 4.3.1 Jacobian and Hessian Matrices</strong></a></li>
 </ul></li>
 <li><a href="#dl-4.4-constrained-optimization"><strong>DL 4.4 Constrained Optimization</strong></a></li>
-<li><a href="#example-linear-least-squares"><strong>4.5 Example: Linear Least Squares</strong></a></li>
+<li><a href="#dl-4.5-example-linear-least-squares"><strong>DL 4.5 Example: Linear Least Squares</strong></a></li>
 </ul>
 </div>
 
@@ -211,7 +211,7 @@ J \in \mathbb{R}^{n \times m}, \quad J_{i,j} = \frac{\partial}{\partial x_j} f(x
 <li>important because it tells us whether a gradient step will cause as much of an improvement as we would expect based on the gradient alone</li>
 <li><span class="math inline">\(f^{\prime \prime}(x) = 0\)</span>: no curvature, value can be predicted using only the gradient</li>
 <li><span class="math inline">\(f^{\prime \prime}(x) &lt; 0\)</span>: function curves downward, so cost function decreases by more than <span class="math inline">\(\epsilon\)</span></li>
-<li><span class="math inline">\(f^{\prime \prime}(x) &gt; 0\)</span>: function curves upward, so cost function decreses by less than <span class="math inline">\(\epsilon\)</span></li>
+<li><span class="math inline">\(f^{\prime \prime}(x) &gt; 0\)</span>: function curves upward, so cost function decreases by less than <span class="math inline">\(\epsilon\)</span></li>
 </ul>
 <p><strong>Hessian matrix</strong>: <span class="math inline">\(\mathbf{H}\left(f \left(\mathbf{x} \right) \right)\)</span> the matrix of all second derivatives <span class="math display">\[
 H(f(\mathbf{x}))_{i,j} = \frac{\partial^2}{\partial x_i \partial x_j} f(\mathbf{x})
@@ -279,7 +279,7 @@ f \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} \right)  &amp; \approx f\left(\ma
 <li>at critical points, <span class="math inline">\(\nabla_{\mathbf{x}}f(\mathbf{x}) = 0\)</span>
 <ul>
 <li>if Hessian is <strong>positive definite</strong> <span class="math inline">\(\rightarrow\)</span> all eigenvalues positive <span class="math inline">\(\rightarrow\)</span> directional second derivative in any direction is positive <span class="math inline">\(\rightarrow\)</span> <span class="math inline">\(x\)</span> is a <strong>local minimum</strong></li>
-<li>if Hessian is <strong>negative definite</strong> <span class="math inline">\(\rightarrow\)</span> all eigenvalues negative <span class="math inline">\(\rightarrow\)</span> directional second derivative in any direction is positive <span class="math inline">\(\rightarrow\)</span> <span class="math inline">\(x\)</span> is a <strong>local maximum</strong></li>
+<li>if Hessian is <strong>negative definite</strong> <span class="math inline">\(\rightarrow\)</span> all eigenvalues negative <span class="math inline">\(\rightarrow\)</span> directional second derivative in any direction is negative <span class="math inline">\(\rightarrow\)</span> <span class="math inline">\(x\)</span> is a <strong>local maximum</strong></li>
 <li>if Hessian has <strong>at least one positive eigenvalue and one negative eigenvalue</strong>, <span class="math inline">\(x\)</span> is a local max in at least one dimension and a local min in at least one dimension, and therefore is a <strong>saddle point</strong></li>
 <li>if <strong>all non-zero eigenvalues have the same sign, but at least one eigenvalue is zero, the test is inconclusive</strong> because the univariate second derivative test is inconclusive in the cross section corresponding to the zero eigenvalue</li>
 </ul></li>
@@ -335,7 +335,7 @@ f(\mathbf{x}) \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}-\mathbf{
 </ul></li>
 </ul></li>
 </ul>
-<p>The most succesful field of specialized optimization is <strong><em>convex optimization</em></strong></p>
+<p>The most successful field of specialized optimization is <strong><em>convex optimization</em></strong></p>
 <ul>
 <li>convex optimization algorithms are able to provide more guarantees by making stronger restrictions
 <ul>
@@ -374,10 +374,10 @@ f(\mathbf{x}) \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}-\mathbf{
 <li>first, describe <span class="math inline">\(\mathbb{S}\)</span> in terms of <span class="math inline">\(m\)</span> functions <span class="math inline">\(g^{(i)}\)</span> and <span class="math inline">\(n\)</span> functions <span class="math inline">\(h^{(j)}\)</span> such that</li>
 </ul>
 <span class="math display">\[
-  \mathbb{S} = \left\{\mathbf{x} \mid \begin{cases}
-                                      \forall i, g^{(i)} (\mathbf{x}) = 0 &amp; \text{equality constraints}\\
-                                      \forall j, h^{(j)} (\mathbf{x}) \leq 0 &amp; \text{inequality constraints}
-                                      \end{cases}
+  \mathbb{S} = \left\{\mathbf{x} \mid \begin{aligned}
+                                      &amp; \forall i, g^{(i)} (\mathbf{x}) = 0     &amp;&amp; \text{equality constraints}\\
+                                      &amp; \forall j, h^{(j)} (\mathbf{x}) \leq 0  &amp;&amp; \text{inequality constraints}
+                                      \end{aligned}
                                       \right\}
   \]</span>
 <ul>
@@ -420,8 +420,8 @@ f(\mathbf{x}) \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}-\mathbf{
 </ul></li>
 </ul>
 </div>
-<div id="example-linear-least-squares" class="section level2">
-<h2><strong>4.5 Example: Linear Least Squares</strong></h2>
+<div id="dl-4.5-example-linear-least-squares" class="section level2">
+<h2><strong>DL 4.5 Example: Linear Least Squares</strong></h2>
 <p>Minimize the squared error loss function <span class="math display">\[
 f(\mathbf{x}) = \frac{1}{2} \lVert \mathbf{Ax}- \mathbf{b} \rVert_2^2
 \]</span></p>
@@ -438,7 +438,7 @@ f(\mathbf{x}) &amp; = \frac{1}{2} \lVert \mathbf{Ax}- \mathbf{b} \rVert_2^2 \\
 \]</span></p>
 <p>Pseudocode for minimization by gradient descent:</p>
 <ul>
-<li>intiialize step size <span class="math inline">\(\epsilon\)</span> and convergence tolerance <span class="math inline">\(\delta\)</span> to small, positive numbers</li>
+<li>initialize step size <span class="math inline">\(\epsilon\)</span> and convergence tolerance <span class="math inline">\(\delta\)</span> to small, positive numbers</li>
 <li><strong>while</strong> <span class="math inline">\(\lVert \mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b} \rVert_2 &gt; \delta\)</span> <strong>do</strong>
 <ul>
 <li><span class="math inline">\(\mathbf{x} \gets \mathbf{x} - \epsilon \left(\mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b} \right)\)</span></li>
@@ -461,7 +461,16 @@ L(\mathbf{x}, \lambda)  &amp; = f(\mathbf{x}) + \lambda \left(\mathbf{x}^T \math
 \mathbf{x} &amp; = \left(\mathbf{A}^T\mathbf{x}+ 2 \lambda \mathbf{I} \right)^{-1} \mathbf{A}^T \mathbf{b}
 \end{align}
 \]</span></p>
-<p>The solution must take the above form, and the magnitude of <span class="math inline">\(\lambda\)</span> must be chosen such that the result obeys the constraint (i.e., <span class="math inline">\(\mathbf{x}^T \mathbf{x}\)</span>).</p>
+<p>The solution must take the above form, and the magnitude of <span class="math inline">\(\lambda\)</span> must be chosen such that the result obeys the constraint (i.e., <span class="math inline">\(\mathbf{x}^T \mathbf{x} \leq 1\)</span>). Value can be found by performing gradient ascent on <span class="math inline">\(\lambda\)</span>: <span class="math display">\[
+\begin{align}
+L(\mathbf{x}, \lambda) &amp;= \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] + \lambda \mathbf{x}^T \mathbf{x} - \lambda \\
+\frac{\partial}{\partial \lambda} L \left(\mathbf{x}, \lambda \right) &amp; = \mathbf{x}^T \mathbf{x} - 1 \\
+\\
+&amp; 
+\text{if} \quad \mathbf{x}^T \mathbf{x} &gt; 1 \quad\rightarrow  \quad \frac{\partial L}{\partial \lambda} &gt; 0 \quad \rightarrow \text{gradient ascent increases } \lambda
+\end{align}
+\]</span></p>
+<p>An increased <span class="math inline">\(\lambda\)</span> means the weight of the <span class="math inline">\(\mathbf{x}^T \mathbf{x}\)</span> penalty in the Lagrangian has increased. Therefore, solving for <span class="math inline">\(\mathbf{x}\)</span> will then yield a solution with a smaller norm. The process of solving the linear equation and adjusting <span class="math inline">\(\lambda\)</span> continues until <span class="math inline">\(\mathbf{x}\)</span> has the correct norm and the derivative on <span class="math inline">\(\lambda\)</span> is 0.</p>
 </div>
 
 
