@@ -10,4 +10,115 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-***Deep feedforward networks***, aka ***feedforward neural networks***, aka ***multi-layer perceptrons*** are the quintessential deep learning models. The goal of a feedforward network: approximate some function $f^*$. 
+***Deep feedforward networks***, aka ***feedforward neural networks***, aka ***multi-layer perceptrons*** are the quintessential deep learning models. The goal of a feedforward network: approximate some function $f^*$.
+
+
+## **6.5 Back-propagation and Other Differentiation Algorithms**
+
+  - ***forward propagation***:
+      - inputs $\mathbf{x}$ provides initial information that propagates through hidden units and finally produces the prediction $\hat{\mathbf{y}}$
+      - during training, forward propagation continues until it produces a scalar cost $J(\theta)$.
+  - ***back-propagation*** (aka ***backprop***):
+      - information from the cost flows backwards through the network, in order to compute the gradient
+      - refers only to the method for computing the gradient
+          - another algorithm, e.g. stochastic gradient descent is used to perform learning using the gradient
+      - in principle, can compute derivatives of any function (not just multi-layer neural networks)
+          - i.e. compute $\nabla_{\mathbf{x}}f(\mathbf{x}, \mathbf{y})$ for an arbitrary function $f$
+              - $\mathbf{x}$: a set of variables whose derivatives are desired
+              - $\mathbf{y}$: an additional set of variables that are inputs to the function (but whose derivatives are not required)
+              - most often, we want to calculate the gradient of the cost function w.r.t. the parameters: $\nabla_\theta J(\theta)$
+          
+### **6.5.1 Computational Graphs**
+
+  - to discuss backprop, it's useful to first develop computational graph language
+  - let each node in the graph indicate a variable (a scalar, vector, matrix, tensor, or other)
+  - introduce the idea of an ***operation***- a simple function of one or more variables
+      - graph language is accompanied by a set of allowable operations
+      - functions more complicated than these operations may be described by composing many operations together
+      - wlog, define an operation to *return only a single output variable*
+          - the output variable could have multiple entries, e.g. a vector
+  - if a variable $y$ is computed by applying an operation to a variable $x$, then we draw a directed edge from $x$ to $y$
+      - we sometimes annotate the output node with the name of the operation applied, and other times omit the label when the operation is clear from context
+      
+### **6.5.2 Chain Rule of Calculus**
+  
+  - (not to be confused with the chain rule of probability)
+  - used to compute the derivatives of functions formed by composing other functions whose derivatives are known
+  - backprop is an algorithm that computes the chain rule, with a specific order of operations that is highly efficient
+  - let:
+      - $x \in \mathbb{R}$
+      - $f, g : \mathbb{R} \mapsto \mathbb{R}$
+      - $y = g(x)$
+      - $z = f(g(x)) = f(y)$
+  - then,
+      - $\frac{dz}{dx} = \frac{dz}{dy} \frac{dy}{dx}$
+  - this can be generalized beyond the scalar case:
+      - suppose that:
+          - $\mathbf{x} \in \mathbb{R}^m, \mathbf{y} \in \mathbb{R}^n$
+          - $g: \mathbb{R}^m \mapsto \mathbb{R}^n$
+          - $f: \mathbb{R}^n \mapsto \mathbb{R}$
+          - $\mathbf{y} = g(\mathbf{x})$
+          - $z = f(\mathbf{y})$
+      - then,
+          - $\frac{\partial z}{\partial x_i} = \sum_j \frac{\partial z}{\partial y_j} \frac{\partial y_j}{\partial x_i}$
+          - in vector notation:
+              - $\nabla_{\mathbf{x}}(z) = \left(\frac{\partial \mathbf{y}}{\partial \mathbf{x}} \right)^T \nabla_{\mathbf{y}} (z)$
+                  - here, $\frac{\partial \mathbf{y}}{\partial \mathbf{x}}$ is the $n \times m$ Jacobian matrix of $g$
+                  - from this, we see that the gradient of a variable $\mathbf{x}$ can be obtained by multiplying a Jacobian matrix $\frac{\partial \mathbf{y}}{\partial \mathbf{x}}$ by a gradient $\nabla_{\mathbf{y}}(z)$
+                  - the backprop algorithm consists of performing such a Jacobian-gradient product for each operation in the graph
+  - usually, backprop is not applied to vectors, but tensors of arbitrary dimensionality
+      - conceptually, this is the same as backprop with vectors
+          - imagine flattening each tensor into a vector before running backprop, computing a vector-valued gradient, and then reshaping the gradient back into a tensor. In this view, backprop is still just multiplying Jacobians by gradients
+          - denote the gradient of a value $z$ w.r.t. a tensor $\mathcal{X}$ by $\nabla_{\mathcal{X}}(z)$
+              - the indices into $\mathcal{X}$ have multiple coordinates
+                  - e.g., a 3-D tensor is indexed by three coordinates
+                  - we abstract this away by using a single variable $i$ to represent the complete tuple of indices
+                  - for all possible tuples $i$, $\left(\nabla_{\mathcal{X}}(z) \right)_i = \frac{\partial z}{\partial \mathcal{X}}_i$
+          - the chain rule as it applies to tensors:
+          
+          $$
+          \begin{align}
+          \mathcal{Y} = g(\mathcal{X}), z = f(\mathcal{Y}), \text{then} \\
+          \\
+          \nabla_{\mathcal{X}}(z) = \sum_j \left(\nabla_{\mathcal{X}} \mathcal{Y}_j \right) \frac{\partial z}{\partial \mathcal{Y}_j}
+          \end{align}
+          $$
+
+### **6.5.3 Recursively Applying the Chain Rule to Obtain Backprop**
+
+  - using chain rule, it is straightforward to write down an algebraic expression for the gradient of a scalar w.r.t. any node in the computational graph that produced that scalar
+  - actually evaluating the expression introduces extra considerations
+      - many subexpressions may be repeated several times within the overall expression for the gradient
+          - for complicated graphs, computing these expressions multiple times can make a naive implementation of the chain rule infeasible
+  - first, consider a computational graph describing how to compute a single scalar $u^{(n)}$ (e.g., the loss on a training example)
+      - want to obtain the gradient w.r.t. the $n_i$ input notes $u^{(1)}$ to $u^{(n_i)}$
+          - in the application of back-propagation for computing gradient descent over parameters:
+              - $u^{(n)}$ will be the cost associated with an example/minibatch
+              - $u^{(1)}$ to $u^{(n_i)}$ correspond to the parameters of the model
+      - assume the nodes are ordered such that we can compute their output one after the other, starting at $u^{(n_i+1)}$ and going up to $u^{(n)}$
+          - each node $u^{(i)}$ is associated with an operation $f(i)$ and is computed by evaluating the function
+          
+          $$
+          u^{(i)} = f\left(\mathbb{A}^{(i)} \right)
+          $$
+          - here, $\mathbb{A}^{(i)}$ is the set of all nodes that are parents of $u^{(i)}$.
+      - ***forward propagation computation***
+          - **for** $i = 1, \dots, n_i$ **do**
+              - $u^{(i)} \gets x_i$
+          - **end for**
+          - **for** $i = n_i+1, \dots, n$ **do**
+              - $\mathbb{A}^{(i)} \gets \left\{u^{(j)} \mid j \in \text{Pa}\left(u^{(i)} \right) \right\}$ 
+              - $u^{(i)} \gets f^{(i)} \left(\mathbb{A}^{(i)} \right)$
+          - **end for**
+          - **return** $u^{(n)}$
+      - the above algorithm specifies the forward propagation computation, which could be put in a graph $\mathcal{G}$
+      - to perform backprop, we can construct a computation graph that depends on $\mathcal{G}$ and adds to it an extra set of nodes
+          - these form a subgraph $\mathcal{B}$ with one node per node of $\mathcal{G}$
+              - each node of $\mathcal{B}$ computes the derivative $\frac{\partial u^{(n)}}{\partial u^{(i)}}$ associated with the forward graph node $u^{(i)}$:
+              
+              $$
+              \frac{\partial u^{(n)}}{\partial u^{(j)}} = \sum_{i:j \in \text{Pa}\left(u^{(i)} \right)} \frac{\partial u^{(n)}}{\partial u^{(i)}} \frac{\partial u^{(i)}}{\partial u^{(j)}}
+              $$
+              
+              - the subgraph $\mathcal{B}$ contains exactly one edge for each edge from node $u^{(j)}$ to node $u^{(i)}$ of $\mathcal{G}$
+                  - the edge from $u^{(j)}$ to $u^{(i)}$ is associated with the computation of $\frac{\partial u^{(i)}}{\partial u^{(j)}}$

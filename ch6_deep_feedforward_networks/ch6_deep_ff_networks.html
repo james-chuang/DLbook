@@ -119,8 +119,197 @@ $(document).ready(function () {
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#back-propagation-and-other-differentiation-algorithms"><strong>6.5 Back-propagation and Other Differentiation Algorithms</strong></a><ul>
+<li><a href="#computational-graphs"><strong>6.5.1 Computational Graphs</strong></a></li>
+<li><a href="#chain-rule-of-calculus"><strong>6.5.2 Chain Rule of Calculus</strong></a></li>
+<li><a href="#recursively-applying-the-chain-rule-to-obtain-backprop"><strong>6.5.3 Recursively Applying the Chain Rule to Obtain Backprop</strong></a></li>
+</ul></li>
+</ul>
+</div>
 
 <p><strong><em>Deep feedforward networks</em></strong>, aka <strong><em>feedforward neural networks</em></strong>, aka <strong><em>multi-layer perceptrons</em></strong> are the quintessential deep learning models. The goal of a feedforward network: approximate some function <span class="math inline">\(f^*\)</span>.</p>
+<div id="back-propagation-and-other-differentiation-algorithms" class="section level2">
+<h2><strong>6.5 Back-propagation and Other Differentiation Algorithms</strong></h2>
+<ul>
+<li><strong><em>forward propagation</em></strong>:
+<ul>
+<li>inputs <span class="math inline">\(\mathbf{x}\)</span> provides initial information that propagates through hidden units and finally produces the prediction <span class="math inline">\(\hat{\mathbf{y}}\)</span></li>
+<li>during training, forward propagation continues until it produces a scalar cost <span class="math inline">\(J(\theta)\)</span>.</li>
+</ul></li>
+<li><strong><em>back-propagation</em></strong> (aka <strong><em>backprop</em></strong>):
+<ul>
+<li>information from the cost flows backwards through the network, in order to compute the gradient</li>
+<li>refers only to the method for computing the gradient
+<ul>
+<li>another algorithm, e.g. stochastic gradient descent is used to perform learning using the gradient</li>
+</ul></li>
+<li>in principle, can compute derivatives of any function (not just multi-layer neural networks)
+<ul>
+<li>i.e. compute <span class="math inline">\(\nabla_{\mathbf{x}}f(\mathbf{x}, \mathbf{y})\)</span> for an arbitrary function <span class="math inline">\(f\)</span>
+<ul>
+<li><span class="math inline">\(\mathbf{x}\)</span>: a set of variables whose derivatives are desired</li>
+<li><span class="math inline">\(\mathbf{y}\)</span>: an additional set of variables that are inputs to the function (but whose derivatives are not required)</li>
+<li>most often, we want to calculate the gradient of the cost function w.r.t. the parameters: <span class="math inline">\(\nabla_\theta J(\theta)\)</span></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<div id="computational-graphs" class="section level3">
+<h3><strong>6.5.1 Computational Graphs</strong></h3>
+<ul>
+<li>to discuss backprop, it’s useful to first develop computational graph language</li>
+<li>let each node in the graph indicate a variable (a scalar, vector, matrix, tensor, or other)</li>
+<li>introduce the idea of an <strong><em>operation</em></strong>- a simple function of one or more variables
+<ul>
+<li>graph language is accompanied by a set of allowable operations</li>
+<li>functions more complicated than these operations may be described by composing many operations together</li>
+<li>wlog, define an operation to <em>return only a single output variable</em>
+<ul>
+<li>the output variable could have multiple entries, e.g. a vector</li>
+</ul></li>
+</ul></li>
+<li>if a variable <span class="math inline">\(y\)</span> is computed by applying an operation to a variable <span class="math inline">\(x\)</span>, then we draw a directed edge from <span class="math inline">\(x\)</span> to <span class="math inline">\(y\)</span>
+<ul>
+<li>we sometimes annotate the output node with the name of the operation applied, and other times omit the label when the operation is clear from context</li>
+</ul></li>
+</ul>
+</div>
+<div id="chain-rule-of-calculus" class="section level3">
+<h3><strong>6.5.2 Chain Rule of Calculus</strong></h3>
+<ul>
+<li>(not to be confused with the chain rule of probability)</li>
+<li>used to compute the derivatives of functions formed by composing other functions whose derivatives are known</li>
+<li>backprop is an algorithm that computes the chain rule, with a specific order of operations that is highly efficient</li>
+<li>let:
+<ul>
+<li><span class="math inline">\(x \in \mathbb{R}\)</span></li>
+<li><span class="math inline">\(f, g : \mathbb{R} \mapsto \mathbb{R}\)</span></li>
+<li><span class="math inline">\(y = g(x)\)</span></li>
+<li><span class="math inline">\(z = f(g(x)) = f(y)\)</span></li>
+</ul></li>
+<li>then,
+<ul>
+<li><span class="math inline">\(\frac{dz}{dx} = \frac{dz}{dy} \frac{dy}{dx}\)</span></li>
+</ul></li>
+<li>this can be generalized beyond the scalar case:
+<ul>
+<li>suppose that:
+<ul>
+<li><span class="math inline">\(\mathbf{x} \in \mathbb{R}^m, \mathbf{y} \in \mathbb{R}^n\)</span></li>
+<li><span class="math inline">\(g: \mathbb{R}^m \mapsto \mathbb{R}^n\)</span></li>
+<li><span class="math inline">\(f: \mathbb{R}^n \mapsto \mathbb{R}\)</span></li>
+<li><span class="math inline">\(\mathbf{y} = g(\mathbf{x})\)</span></li>
+<li><span class="math inline">\(z = f(\mathbf{y})\)</span></li>
+</ul></li>
+<li>then,
+<ul>
+<li><span class="math inline">\(\frac{\partial z}{\partial x_i} = \sum_j \frac{\partial z}{\partial y_j} \frac{\partial y_j}{\partial x_i}\)</span></li>
+<li>in vector notation:
+<ul>
+<li><span class="math inline">\(\nabla_{\mathbf{x}}(z) = \left(\frac{\partial \mathbf{y}}{\partial \mathbf{x}} \right)^T \nabla_{\mathbf{y}} (z)\)</span>
+<ul>
+<li>here, <span class="math inline">\(\frac{\partial \mathbf{y}}{\partial \mathbf{x}}\)</span> is the <span class="math inline">\(n \times m\)</span> Jacobian matrix of <span class="math inline">\(g\)</span></li>
+<li>from this, we see that the gradient of a variable <span class="math inline">\(\mathbf{x}\)</span> can be obtained by multiplying a Jacobian matrix <span class="math inline">\(\frac{\partial \mathbf{y}}{\partial \mathbf{x}}\)</span> by a gradient <span class="math inline">\(\nabla_{\mathbf{y}}(z)\)</span></li>
+<li>the backprop algorithm consists of performing such a Jacobian-gradient product for each operation in the graph</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>usually, backprop is not applied to vectors, but tensors of arbitrary dimensionality
+<ul>
+<li>conceptually, this is the same as backprop with vectors
+<ul>
+<li>imagine flattening each tensor into a vector before running backprop, computing a vector-valued gradient, and then reshaping the gradient back into a tensor. In this view, backprop is still just multiplying Jacobians by gradients</li>
+<li>denote the gradient of a value <span class="math inline">\(z\)</span> w.r.t. a tensor <span class="math inline">\(\mathcal{X}\)</span> by <span class="math inline">\(\nabla_{\mathcal{X}}(z)\)</span>
+<ul>
+<li>the indices into <span class="math inline">\(\mathcal{X}\)</span> have multiple coordinates
+<ul>
+<li>e.g., a 3-D tensor is indexed by three coordinates</li>
+<li>we abstract this away by using a single variable <span class="math inline">\(i\)</span> to represent the complete tuple of indices</li>
+<li>for all possible tuples <span class="math inline">\(i\)</span>, <span class="math inline">\(\left(\nabla_{\mathcal{X}}(z) \right)_i = \frac{\partial z}{\partial \mathcal{X}}_i\)</span></li>
+</ul></li>
+</ul></li>
+<li>the chain rule as it applies to tensors:</li>
+</ul>
+<span class="math display">\[
+  \begin{align}
+  \mathcal{Y} = g(\mathcal{X}), z = f(\mathcal{Y}), \text{then} \\
+  \\
+  \nabla_{\mathcal{X}}(z) = \sum_j \left(\nabla_{\mathcal{X}} \mathcal{Y}_j \right) \frac{\partial z}{\partial \mathcal{Y}_j}
+  \end{align}
+  \]</span></li>
+</ul></li>
+</ul>
+</div>
+<div id="recursively-applying-the-chain-rule-to-obtain-backprop" class="section level3">
+<h3><strong>6.5.3 Recursively Applying the Chain Rule to Obtain Backprop</strong></h3>
+<ul>
+<li>using chain rule, it is straightforward to write down an algebraic expression for the gradient of a scalar w.r.t. any node in the computational graph that produced that scalar</li>
+<li>actually evaluating the expression introduces extra considerations
+<ul>
+<li>many subexpressions may be repeated several times within the overall expression for the gradient
+<ul>
+<li>for complicated graphs, computing these expressions multiple times can make a naive implementation of the chain rule infeasible</li>
+</ul></li>
+</ul></li>
+<li>first, consider a computational graph describing how to compute a single scalar <span class="math inline">\(u^{(n)}\)</span> (e.g., the loss on a training example)
+<ul>
+<li>want to obtain the gradient w.r.t. the <span class="math inline">\(n_i\)</span> input notes <span class="math inline">\(u^{(1)}\)</span> to <span class="math inline">\(u^{(n_i)}\)</span>
+<ul>
+<li>in the application of back-propagation for computing gradient descent over parameters:
+<ul>
+<li><span class="math inline">\(u^{(n)}\)</span> will be the cost associated with an example/minibatch</li>
+<li><span class="math inline">\(u^{(1)}\)</span> to <span class="math inline">\(u^{(n_i)}\)</span> correspond to the parameters of the model</li>
+</ul></li>
+</ul></li>
+<li>assume the nodes are ordered such that we can compute their output one after the other, starting at <span class="math inline">\(u^{(n_i+1)}\)</span> and going up to <span class="math inline">\(u^{(n)}\)</span>
+<ul>
+<li>each node <span class="math inline">\(u^{(i)}\)</span> is associated with an operation <span class="math inline">\(f(i)\)</span> and is computed by evaluating the function</li>
+</ul>
+<span class="math display">\[
+  u^{(i)} = f\left(\mathbb{A}^{(i)} \right)
+  \]</span>
+<ul>
+<li>here, <span class="math inline">\(\mathbb{A}^{(i)}\)</span> is the set of all nodes that are parents of <span class="math inline">\(u^{(i)}\)</span>.</li>
+</ul></li>
+<li><strong><em>forward propagation computation</em></strong>
+<ul>
+<li><strong>for</strong> <span class="math inline">\(i = 1, \dots, n_i\)</span> <strong>do</strong>
+<ul>
+<li><span class="math inline">\(u^{(i)} \gets x_i\)</span></li>
+</ul></li>
+<li><strong>end for</strong></li>
+<li><strong>for</strong> <span class="math inline">\(i = n_i+1, \dots, n\)</span> <strong>do</strong>
+<ul>
+<li><span class="math inline">\(\mathbb{A}^{(i)} \gets \left\{u^{(j)} \mid j \in \text{Pa}\left(u^{(i)} \right) \right\}\)</span></li>
+<li><span class="math inline">\(u^{(i)} \gets f^{(i)} \left(\mathbb{A}^{(i)} \right)\)</span></li>
+</ul></li>
+<li><strong>end for</strong></li>
+<li><strong>return</strong> <span class="math inline">\(u^{(n)}\)</span></li>
+</ul></li>
+<li>the above algorithm specifies the forward propagation computation, which could be put in a graph <span class="math inline">\(\mathcal{G}\)</span></li>
+<li>to perform backprop, we can construct a computation graph that depends on <span class="math inline">\(\mathcal{G}\)</span> and adds to it an extra set of nodes
+<ul>
+<li>these form a subgraph <span class="math inline">\(\mathcal{B}\)</span> with one node per node of <span class="math inline">\(\mathcal{G}\)</span>
+<ul>
+<li>each node of <span class="math inline">\(\mathcal{B}\)</span> computes the derivative <span class="math inline">\(\frac{\partial u^{(n)}}{\partial u^{(i)}}\)</span> associated with the forward graph node <span class="math inline">\(u^{(i)}\)</span>:</li>
+</ul>
+<p><span class="math display">\[
+  \frac{\partial u^{(n)}}{\partial u^{(j)}} = \sum_{i:j \in \text{Pa}\left(u^{(i)} \right)} \frac{\partial u^{(n)}}{\partial u^{(i)}} \frac{\partial u^{(i)}}{\partial u^{(j)}}
+  \]</span></p>
+<ul>
+<li>the subgraph <span class="math inline">\(\mathcal{B}\)</span> contains exactly one edge for each edge from node <span class="math inline">\(u^{(j)}\)</span> to node <span class="math inline">\(u^{(i)}\)</span> of <span class="math inline">\(\mathcal{G}\)</span>
+<ul>
+<li>the edge from <span class="math inline">\(u^{(j)}\)</span> to <span class="math inline">\(u^{(i)}\)</span> is associated with the computation of <span class="math inline">\(\frac{\partial u^{(i)}}{\partial u^{(j)}}\)</span></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
 
 
 
