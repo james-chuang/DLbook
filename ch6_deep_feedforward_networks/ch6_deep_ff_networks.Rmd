@@ -102,7 +102,7 @@ knitr::opts_chunk$set(echo = TRUE)
           u^{(i)} = f\left(\mathbb{A}^{(i)} \right)
           $$
           - here, $\mathbb{A}^{(i)}$ is the set of all nodes that are parents of $u^{(i)}$.
-      - ***forward propagation computation***
+      - ***Algorithm 6.1: forward propagation computation***
           - **for** $i = 1, \dots, n_i$ **do**
               - $u^{(i)} \gets x_i$
           - **end for**
@@ -122,3 +122,131 @@ knitr::opts_chunk$set(echo = TRUE)
               
               - the subgraph $\mathcal{B}$ contains exactly one edge for each edge from node $u^{(j)}$ to node $u^{(i)}$ of $\mathcal{G}$
                   - the edge from $u^{(j)}$ to $u^{(i)}$ is associated with the computation of $\frac{\partial u^{(i)}}{\partial u^{(j)}}$
+                  - for each node, a dot product is performed between:
+                      - the gradient already computed w.r.t. notes $u^{(i)}$ that are children of $u^{(j)}$
+                      - the vector containing the partial derivatives $\frac{\partial u^{(i)}}{\partial u^{(j)}}$ for the same children nodes $u^{(i)}$
+          - the amount of computation required for performing backprop scales *linearly* with the number of edge in $\mathcal{G}$
+              - computation for each edge corresponds to computing a partial derivative (of one node w.r.t. its parents) as well as performing one multiplication and one addition
+          - ***Algorithm 6.2: simplified version of backprop*** (for computing the derivatives of $u^{(n)}$ w.r.t the variables in the graph)
+              - simplifications: all variables are scalars, and compute derivatives of all nodes in the graph
+              - run forward propagation (Algorithm 6.1) to obtain network activations
+              - initialize `grad_table`: a data structure that will store the computed derivatives
+                  - `grad_table`$\left[u^{(i)} \right] = \frac{\partial u^{(n)}}{\partial u^{(i)}}$
+              - `grad_table`$\left[\partial u^{(n)} \right] \gets 1$
+              - **for** $j = n-1$ down to 1 **do**
+                  - `grad_table`$\left[u^{(j)} \right] \gets \sum_{i:j \in \text{Pa}\left( u^{(i)}\right)}$`grad_table`$\left[u^{(i)} \right] \frac{\partial u^{(i)}}{\partial u^{(j)}}$
+                      - this computes $\frac{\partial u^{(n)}}{\partial u^{(j)}} = \sum_{i:j\in \text{Pa}\left(u^{(i)} \right)} \frac{\partial u^{(n)}}{\partial u^{(i)}} \frac{\partial u^{(i)}}{\partial u^{(j)}}$
+              - **end for**
+              - **return** $\{$`grad_table`$\left[u^{(i)} \right] \mid i = 1, \dots, n_i \}$
+                      
+          - backprop is designed to reduce the number of common subexpressions without regard to memory
+              - performs on the order of one Jacobian product per node in the graph, thus avoiding exponential explosion in repeated subexpressions
+                  - this can be seen from that fact that backprop visits each edge from node $u^{(j)}$ to node $u^{(i)}$ of the graph exactly once in order to obtain the associated partial derivative $\frac{\partial u^{(j)}}{\partial u^{(i)}}$
+              - other algorithms may be able to avoid more subexpressions by performing simplifications on the computational graph, or may conserve memory by recomputing rather than storing some subexpressions
+              
+### **6.5.4 Back-Propagation Computation in Fully-Connected MLP**
+
+  - consider the specific graph associated with a fully-connected multi-layer MLP
+      - ***Algorithm 6.3: forward propagation*** (compute gradients of cost $J$ w.r.t. parameters $\mathbf{W}$ and $\mathbf{b}$, with single training example $\mathbf{x}$)
+          - maps parameters to the supervised loss $L\left(\hat{\mathbf{y}}, \mathbf{y} \right)$ associated with a single training example $\left(\mathbf{x}, \mathbf{y} \right)$
+              - $\hat{\mathbf{y}}$ is the output of the neural network when $\mathbf{x}$ is provided as input
+          - **require:** $l$, the network depth
+          - **require:** $\mathbf{W}^{(i)}, i \in \left\{1, \dots, l \right\}$, the weight matrices of the model
+          - **require:** $\mathbf{b}^{(i)}, i \in \left\{1, \dots, l \right\}$, the bias parameters of the model
+          - **require:** $\mathbf{x}$, the input to process
+          - **require:** $\mathbf{y}$, the target output
+              - $\mathbf{h}^{(0)} = \mathbf{x}$
+              - **for** $k = 1, \dots, l$ **do**
+                  - $\mathbf{a}^{(k)} = \mathbf{b}^{(k)} + \mathbf{W}^{(k)}\mathbf{h}^{(k-1)}$
+                  - $\mathbf{h}^{(k)} = f \left(\mathbf{a}^{(k)} \right)$
+              - **end for**
+              - $\hat{\mathbf{y}} = \mathbf{h}^{(l)}$
+              - $J = L \left(\hat{\mathbf{y}}, \mathbf{y}\right) + \lambda \Omega (\theta)$
+      - ***Algorithm 6.4: backprop*** on the same network of Algorithm 6.3 (compute the gradients on the activations $\mathbf{a}^{(k)}$ for each layer $k$, starting from the output layer and going backwards to the first hidden layer)
+          - after the forward computation, compute the gradient on the output layer:
+          - $\mathbf{g} \gets \nabla_{\hat{\mathbf{y}}}J = \nabla_{\hat{\mathbf{y}}} L(\hat{\mathbf{y}}, \mathbf{y})$
+          - **for** $k = l, l-1, \dots, 1$ **do**
+              - convert the gradient on the layer's output into a gradient on the pre-nonlinearity activation (element-wise multiplciation if $f$ is element-wise):
+                  - $\mathbf{g} \gets \nabla_{\mathbf{a}^{(k)}}J = \mathbf{g} \odot f^\prime \left(\mathbf{a}^{(k)} \right)$
+              - compute gradients on weights and biases (including the regularization term, where needed):
+                  - $\nabla_{\mathbf{b}^{(k)}}J = \mathbf{g} + \lambda \nabla_{\mathbf{b}^{(k)}} \Omega (\theta)$
+                  - $\nabla_{\mathbf{W}^{(k)}}J = \mathbf{g} \mathbf{h}^{(k-1)T} + \lambda \nabla_{\mathbf{W}^{(k)}} \Omega (\theta)$
+              - propagate the gradients w.r.t. the next lower-level hidden layer's activations:
+                  - $\mathbf{g} \gets \nabla_{\mathbf{h}^{(k-1)}}J = \mathbf{W}^{(k)T}\mathbf{g}$
+          - **end for**
+  - these are simple, specialized algorithms
+      - modern software implementations are based on a generalized form of backprop that can accomodate any computational graph by explicitly manipulating a data structure for representing symbolic computation
+      
+### **6.5.5 Symbol-to-Symbol Derivatives**
+
+  - algebraic expressions and computational graphs both operate on ***symbols***- variables that do not have specific values
+      - these algebraic and graph-based representations are called ***symbolic representations***
+          - when using or training a neural network, symbolic inputs are replaced with a specific ***numeric*** value
+  - some approaches to backprop use a ***"symbol-to-number"*** approach to differentiation:
+      - take a computational graph and a set of numerical values for the inputs to the graph
+      - return a set of numerical values describing the gradient at those input values
+      - e.g. Torch, Caffe
+  - another approach is to use a ***"symbol-to-symbol"*** approach to differentiation:
+      - take a computational graph and add additional nodes to the graph that provide a symbolic description of the desired derivatives
+      - e.g. Theano, Tensorflow
+      - primary advantage: derivatives are described in the same language as the original expression
+          - because the derivatives are just another computational graph, it is possible to run backprop again, differentiating the derivatives in order to obtain higher derivatives
+          - every node can be evaluated as soon as its parents' values are available, allowing us to avoid specifying exactly when each operation should be computed
+      - symbol-to-symbol subsumes the symbol-to-number approach
+          - symbol-to-number performs the exact same computations as are done in the graph build by the symbol-to-symbol approach
+          - the key difference: symbol-to-number does not expose the graph
+     
+### **6.5.6 General Back-Propagation**
+
+  - to compute the gradient of some scalar $z$ w.r.t. one of its ancestors $\mathbf{x}$ in the graph:
+      - begin by observing that the gradient w.r.t. $z$ is given by $\frac{dz}{dz} = 1$
+      - we can then compute the gradient w.r.t. each parent of $z$ in the graph by multiplying the current gradient by the Jacobian of the operation that produced $z$
+      - continue multipying by Jacobians traveling backwards through the graph in this way until we reach $\mathbf{x}$
+          - for any node that may be reached by going backwards from $z$ through two or more paths, simply sum the gradients arriving from different paths at that node
+  - more formally:
+      - each node in the graph $\mathcal{G}$ corresponds to a variable
+          - for maximum generality, this variable is a tensor $\mathcal{V}$
+              - in general, a tensor can have any number of dimensions (subsuming scalars, vectors, matrices)
+      - assume each variable $\mathcal{V}$ is associated with the following subroutines:
+          - `get_operation`$(\mathcal{V})$
+              - returns the operation that computes $\mathcal{V}$
+              - represented by the edges coming into $\mathcal{V}$ in the computational graph
+          - `get_consumers`$(\mathcal{V}, \mathcal{G})$
+              - returns the list of variables that are children of $\mathcal{V}$ in the computational graph $\mathcal{G}$
+          - `get_inputs`$(\mathcal{V}, \mathcal{G})$
+              - returns the list of variables that are parents of $\mathcal{V}$ in the computational graph $\mathcal{G}$
+      - each operation `op` is also associated with a `bprop` operation
+          - `bprop` computes a Jacobian-vector product, i.e. the chain rule, $\nabla_{\mathcal{X}}(z) = \sum_j \left(\nabla_{\mathcal{X}} \mathcal{Y}_j \right) \frac{\partial z}{\partial \mathcal{Y}_j}$
+              - e.g. consider a matrix multiplication operation creating a variable $\mathbf{C} = \mathbf{AB}$
+                  - let the gradient of a scalar $z$ w.r.t. $\mathbf{C}$ is given by $\mathbf{G}$
+                  - the matrix multiplication operation is responsible for defining two backprop rules, one for each of its input arguments:
+                      - if we call `bprop` to request the gradient w.r.t. $\mathbf{A}$ given that the gradient on the output is $\mathbf{G}$, `bprop` must state that the gradient w.r.t. $\mathbf{A}$ is given by $\mathbf{GB}^T$
+                      - if we call `bprop` to request the gradient w.r.t. $\mathbf{B}$, `bprop` must state that the gradient is $\mathbf{A}^T\mathbf{G}$ 
+                      - the backprop algorithm does not need to know any differentiation rules
+                          - it only needs to call each operation's `bprop` rules with the right arguments
+              - formally, $\texttt{op.bprop}\left(\texttt{inputs}, \mathcal{X}, \mathcal{G} \right)$ must return
+              
+                  $$
+                  \sum_i \left(\nabla_{\mathcal{X}} \texttt{op.f} \left(\texttt{inputs} \right)_i \right) \mathcal{G}_i
+                  $$
+                  - $\texttt{inputs}$: list of inputs supplied to the operation
+                  - $\texttt{op.f}$: the mathematical function that the operation implements
+                  - $\mathcal{X}$: the input whose gradient we wish to compute
+                  - $\mathcal{G}$: the gradient on the output of the operation  
+              - the $\texttt{op.brop}$ method should always treat all of its inputs as distinct from each other, even if they are not
+                  - e.g. if two copies of $x$ are input to compute $x^2$, the derivative w.r.t. each input should still be $x$
+              - software implementations of backprop usually provide both the operations and their `bprop` methods
+                  - if building a new implementation of backprop or adding a custom operation to an existing library, usually need to derive the `op.bprop` method for the new operation
+  - ***Algorithm 6.5: the back-propagation algorithm***
+      - this is the outermost skeleton, for simple setup and cleanup
+      - most of the important work happens in the `build_grad` subroutine of Algorithm 6.6
+      - **require:** $\mathbb{T}$, the target set of variables whose gradients must be computed
+      - **require:** $\mathcal{G}$, the computational graph
+      - **require:** $z$, the varaiable to be differentiated
+          - Let $\mathcal{G}^\prime$ be $\mathcal{G}$ pruned to contain only nodes that are ancestors of $z$ and descendents of nodes in $\mathbb{T}$
+          - Initialize `grad_table`, a data structure associating tensors to their gradients
+          - `grad_table`$[z] \gets 1$
+          - **for** $\mathcal{V}$ in $\mathbb{T}$ **do**
+              - `build_grad`$( \mathcal{V}, \mathcal{G}, \mathcal{G}^\prime,$`grad_table`$)$
+          - **end for**
+          - return `grad_table` restricted to $\mathbb{T}$

@@ -125,6 +125,9 @@ $(document).ready(function () {
 <li><a href="#computational-graphs"><strong>6.5.1 Computational Graphs</strong></a></li>
 <li><a href="#chain-rule-of-calculus"><strong>6.5.2 Chain Rule of Calculus</strong></a></li>
 <li><a href="#recursively-applying-the-chain-rule-to-obtain-backprop"><strong>6.5.3 Recursively Applying the Chain Rule to Obtain Backprop</strong></a></li>
+<li><a href="#back-propagation-computation-in-fully-connected-mlp"><strong>6.5.4 Back-Propagation Computation in Fully-Connected MLP</strong></a></li>
+<li><a href="#symbol-to-symbol-derivatives"><strong>6.5.5 Symbol-to-Symbol Derivatives</strong></a></li>
+<li><a href="#general-back-propagation"><strong>6.5.6 General Back-Propagation</strong></a></li>
 </ul></li>
 </ul>
 </div>
@@ -274,7 +277,7 @@ $(document).ready(function () {
 <ul>
 <li>here, <span class="math inline">\(\mathbb{A}^{(i)}\)</span> is the set of all nodes that are parents of <span class="math inline">\(u^{(i)}\)</span>.</li>
 </ul></li>
-<li><strong><em>forward propagation computation</em></strong>
+<li><strong><em>Algorithm 6.1: forward propagation computation</em></strong>
 <ul>
 <li><strong>for</strong> <span class="math inline">\(i = 1, \dots, n_i\)</span> <strong>do</strong>
 <ul>
@@ -303,8 +306,231 @@ $(document).ready(function () {
 <li>the subgraph <span class="math inline">\(\mathcal{B}\)</span> contains exactly one edge for each edge from node <span class="math inline">\(u^{(j)}\)</span> to node <span class="math inline">\(u^{(i)}\)</span> of <span class="math inline">\(\mathcal{G}\)</span>
 <ul>
 <li>the edge from <span class="math inline">\(u^{(j)}\)</span> to <span class="math inline">\(u^{(i)}\)</span> is associated with the computation of <span class="math inline">\(\frac{\partial u^{(i)}}{\partial u^{(j)}}\)</span></li>
+<li>for each node, a dot product is performed between:
+<ul>
+<li>the gradient already computed w.r.t. notes <span class="math inline">\(u^{(i)}\)</span> that are children of <span class="math inline">\(u^{(j)}\)</span></li>
+<li>the vector containing the partial derivatives <span class="math inline">\(\frac{\partial u^{(i)}}{\partial u^{(j)}}\)</span> for the same children nodes <span class="math inline">\(u^{(i)}\)</span></li>
 </ul></li>
 </ul></li>
+</ul></li>
+<li>the amount of computation required for performing backprop scales <em>linearly</em> with the number of edge in <span class="math inline">\(\mathcal{G}\)</span>
+<ul>
+<li>computation for each edge corresponds to computing a partial derivative (of one node w.r.t. its parents) as well as performing one multiplication and one addition</li>
+</ul></li>
+<li><strong><em>Algorithm 6.2: simplified version of backprop</em></strong> (for computing the derivatives of <span class="math inline">\(u^{(n)}\)</span> w.r.t the variables in the graph)
+<ul>
+<li>simplifications: all variables are scalars, and compute derivatives of all nodes in the graph</li>
+<li>run forward propagation (Algorithm 6.1) to obtain network activations</li>
+<li>initialize <code>grad_table</code>: a data structure that will store the computed derivatives
+<ul>
+<li><code>grad_table</code><span class="math inline">\(\left[u^{(i)} \right] = \frac{\partial u^{(n)}}{\partial u^{(i)}}\)</span></li>
+</ul></li>
+<li><code>grad_table</code><span class="math inline">\(\left[\partial u^{(n)} \right] \gets 1\)</span></li>
+<li><strong>for</strong> <span class="math inline">\(j = n-1\)</span> down to 1 <strong>do</strong>
+<ul>
+<li><code>grad_table</code><span class="math inline">\(\left[u^{(j)} \right] \gets \sum_{i:j \in \text{Pa}\left( u^{(i)}\right)}\)</span><code>grad_table</code><span class="math inline">\(\left[u^{(i)} \right] \frac{\partial u^{(i)}}{\partial u^{(j)}}\)</span>
+<ul>
+<li>this computes <span class="math inline">\(\frac{\partial u^{(n)}}{\partial u^{(j)}} = \sum_{i:j\in \text{Pa}\left(u^{(i)} \right)} \frac{\partial u^{(n)}}{\partial u^{(i)}} \frac{\partial u^{(i)}}{\partial u^{(j)}}\)</span></li>
+</ul></li>
+</ul></li>
+<li><strong>end for</strong></li>
+<li><strong>return</strong> <span class="math inline">\(\{\)</span><code>grad_table</code><span class="math inline">\(\left[u^{(i)} \right] \mid i = 1, \dots, n_i \}\)</span></li>
+</ul></li>
+<li>backprop is designed to reduce the number of common subexpressions without regard to memory
+<ul>
+<li>performs on the order of one Jacobian product per node in the graph, thus avoiding exponential explosion in repeated subexpressions
+<ul>
+<li>this can be seen from that fact that backprop visits each edge from node <span class="math inline">\(u^{(j)}\)</span> to node <span class="math inline">\(u^{(i)}\)</span> of the graph exactly once in order to obtain the associated partial derivative <span class="math inline">\(\frac{\partial u^{(j)}}{\partial u^{(i)}}\)</span></li>
+</ul></li>
+<li>other algorithms may be able to avoid more subexpressions by performing simplifications on the computational graph, or may conserve memory by recomputing rather than storing some subexpressions</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="back-propagation-computation-in-fully-connected-mlp" class="section level3">
+<h3><strong>6.5.4 Back-Propagation Computation in Fully-Connected MLP</strong></h3>
+<ul>
+<li>consider the specific graph associated with a fully-connected multi-layer MLP
+<ul>
+<li><strong><em>Algorithm 6.3: forward propagation</em></strong> (compute gradients of cost <span class="math inline">\(J\)</span> w.r.t. parameters <span class="math inline">\(\mathbf{W}\)</span> and <span class="math inline">\(\mathbf{b}\)</span>, with single training example <span class="math inline">\(\mathbf{x}\)</span>)
+<ul>
+<li>maps parameters to the supervised loss <span class="math inline">\(L\left(\hat{\mathbf{y}}, \mathbf{y} \right)\)</span> associated with a single training example <span class="math inline">\(\left(\mathbf{x}, \mathbf{y} \right)\)</span>
+<ul>
+<li><span class="math inline">\(\hat{\mathbf{y}}\)</span> is the output of the neural network when <span class="math inline">\(\mathbf{x}\)</span> is provided as input</li>
+</ul></li>
+<li><strong>require:</strong> <span class="math inline">\(l\)</span>, the network depth</li>
+<li><strong>require:</strong> <span class="math inline">\(\mathbf{W}^{(i)}, i \in \left\{1, \dots, l \right\}\)</span>, the weight matrices of the model</li>
+<li><strong>require:</strong> <span class="math inline">\(\mathbf{b}^{(i)}, i \in \left\{1, \dots, l \right\}\)</span>, the bias parameters of the model</li>
+<li><strong>require:</strong> <span class="math inline">\(\mathbf{x}\)</span>, the input to process</li>
+<li><strong>require:</strong> <span class="math inline">\(\mathbf{y}\)</span>, the target output
+<ul>
+<li><span class="math inline">\(\mathbf{h}^{(0)} = \mathbf{x}\)</span></li>
+<li><strong>for</strong> <span class="math inline">\(k = 1, \dots, l\)</span> <strong>do</strong>
+<ul>
+<li><span class="math inline">\(\mathbf{a}^{(k)} = \mathbf{b}^{(k)} + \mathbf{W}^{(k)}\mathbf{h}^{(k-1)}\)</span></li>
+<li><span class="math inline">\(\mathbf{h}^{(k)} = f \left(\mathbf{a}^{(k)} \right)\)</span></li>
+</ul></li>
+<li><strong>end for</strong></li>
+<li><span class="math inline">\(\hat{\mathbf{y}} = \mathbf{h}^{(l)}\)</span></li>
+<li><span class="math inline">\(J = L \left(\hat{\mathbf{y}}, \mathbf{y}\right) + \lambda \Omega (\theta)\)</span></li>
+</ul></li>
+</ul></li>
+<li><strong><em>Algorithm 6.4: backprop</em></strong> on the same network of Algorithm 6.3 (compute the gradients on the activations <span class="math inline">\(\mathbf{a}^{(k)}\)</span> for each layer <span class="math inline">\(k\)</span>, starting from the output layer and going backwards to the first hidden layer)
+<ul>
+<li>after the forward computation, compute the gradient on the output layer:</li>
+<li><span class="math inline">\(\mathbf{g} \gets \nabla_{\hat{\mathbf{y}}}J = \nabla_{\hat{\mathbf{y}}} L(\hat{\mathbf{y}}, \mathbf{y})\)</span></li>
+<li><strong>for</strong> <span class="math inline">\(k = l, l-1, \dots, 1\)</span> <strong>do</strong>
+<ul>
+<li>convert the gradient on the layer’s output into a gradient on the pre-nonlinearity activation (element-wise multiplciation if <span class="math inline">\(f\)</span> is element-wise):
+<ul>
+<li><span class="math inline">\(\mathbf{g} \gets \nabla_{\mathbf{a}^{(k)}}J = \mathbf{g} \odot f^\prime \left(\mathbf{a}^{(k)} \right)\)</span></li>
+</ul></li>
+<li>compute gradients on weights and biases (including the regularization term, where needed):
+<ul>
+<li><span class="math inline">\(\nabla_{\mathbf{b}^{(k)}}J = \mathbf{g} + \lambda \nabla_{\mathbf{b}^{(k)}} \Omega (\theta)\)</span></li>
+<li><span class="math inline">\(\nabla_{\mathbf{W}^{(k)}}J = \mathbf{g} \mathbf{h}^{(k-1)T} + \lambda \nabla_{\mathbf{W}^{(k)}} \Omega (\theta)\)</span></li>
+</ul></li>
+<li>propagate the gradients w.r.t. the next lower-level hidden layer’s activations:
+<ul>
+<li><span class="math inline">\(\mathbf{g} \gets \nabla_{\mathbf{h}^{(k-1)}}J = \mathbf{W}^{(k)T}\mathbf{g}\)</span></li>
+</ul></li>
+</ul></li>
+<li><strong>end for</strong></li>
+</ul></li>
+</ul></li>
+<li>these are simple, specialized algorithms
+<ul>
+<li>modern software implementations are based on a generalized form of backprop that can accomodate any computational graph by explicitly manipulating a data structure for representing symbolic computation</li>
+</ul></li>
+</ul>
+</div>
+<div id="symbol-to-symbol-derivatives" class="section level3">
+<h3><strong>6.5.5 Symbol-to-Symbol Derivatives</strong></h3>
+<ul>
+<li>algebraic expressions and computational graphs both operate on <strong><em>symbols</em></strong>- variables that do not have specific values
+<ul>
+<li>these algebraic and graph-based representations are called <strong><em>symbolic representations</em></strong>
+<ul>
+<li>when using or training a neural network, symbolic inputs are replaced with a specific <strong><em>numeric</em></strong> value</li>
+</ul></li>
+</ul></li>
+<li>some approaches to backprop use a <strong><em>“symbol-to-number”</em></strong> approach to differentiation:
+<ul>
+<li>take a computational graph and a set of numerical values for the inputs to the graph</li>
+<li>return a set of numerical values describing the gradient at those input values</li>
+<li>e.g. Torch, Caffe</li>
+</ul></li>
+<li>another approach is to use a <strong><em>“symbol-to-symbol”</em></strong> approach to differentiation:
+<ul>
+<li>take a computational graph and add additional nodes to the graph that provide a symbolic description of the desired derivatives</li>
+<li>e.g. Theano, Tensorflow</li>
+<li>primary advantage: derivatives are described in the same language as the original expression
+<ul>
+<li>because the derivatives are just another computational graph, it is possible to run backprop again, differentiating the derivatives in order to obtain higher derivatives</li>
+<li>every node can be evaluated as soon as its parents’ values are available, allowing us to avoid specifying exactly when each operation should be computed</li>
+</ul></li>
+<li>symbol-to-symbol subsumes the symbol-to-number approach
+<ul>
+<li>symbol-to-number performs the exact same computations as are done in the graph build by the symbol-to-symbol approach</li>
+<li>the key difference: symbol-to-number does not expose the graph</li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="general-back-propagation" class="section level3">
+<h3><strong>6.5.6 General Back-Propagation</strong></h3>
+<ul>
+<li>to compute the gradient of some scalar <span class="math inline">\(z\)</span> w.r.t. one of its ancestors <span class="math inline">\(\mathbf{x}\)</span> in the graph:
+<ul>
+<li>begin by observing that the gradient w.r.t. <span class="math inline">\(z\)</span> is given by <span class="math inline">\(\frac{dz}{dz} = 1\)</span></li>
+<li>we can then compute the gradient w.r.t. each parent of <span class="math inline">\(z\)</span> in the graph by multiplying the current gradient by the Jacobian of the operation that produced <span class="math inline">\(z\)</span></li>
+<li>continue multipying by Jacobians traveling backwards through the graph in this way until we reach <span class="math inline">\(\mathbf{x}\)</span>
+<ul>
+<li>for any node that may be reached by going backwards from <span class="math inline">\(z\)</span> through two or more paths, simply sum the gradients arriving from different paths at that node</li>
+</ul></li>
+</ul></li>
+<li>more formally:
+<ul>
+<li>each node in the graph <span class="math inline">\(\mathcal{G}\)</span> corresponds to a variable
+<ul>
+<li>for maximum generality, this variable is a tensor <span class="math inline">\(\mathcal{V}\)</span>
+<ul>
+<li>in general, a tensor can have any number of dimensions (subsuming scalars, vectors, matrices)</li>
+</ul></li>
+</ul></li>
+<li>assume each variable <span class="math inline">\(\mathcal{V}\)</span> is associated with the following subroutines:
+<ul>
+<li><code>get_operation</code><span class="math inline">\((\mathcal{V})\)</span>
+<ul>
+<li>returns the operation that computes <span class="math inline">\(\mathcal{V}\)</span></li>
+<li>represented by the edges coming into <span class="math inline">\(\mathcal{V}\)</span> in the computational graph</li>
+</ul></li>
+<li><code>get_consumers</code><span class="math inline">\((\mathcal{V}, \mathcal{G})\)</span>
+<ul>
+<li>returns the list of variables that are children of <span class="math inline">\(\mathcal{V}\)</span> in the computational graph <span class="math inline">\(\mathcal{G}\)</span></li>
+</ul></li>
+<li><code>get_inputs</code><span class="math inline">\((\mathcal{V}, \mathcal{G})\)</span>
+<ul>
+<li>returns the list of variables that are parents of <span class="math inline">\(\mathcal{V}\)</span> in the computational graph <span class="math inline">\(\mathcal{G}\)</span></li>
+</ul></li>
+</ul></li>
+<li>each operation <code>op</code> is also associated with a <code>bprop</code> operation
+<ul>
+<li><code>bprop</code> computes a Jacobian-vector product, i.e. the chain rule, <span class="math inline">\(\nabla_{\mathcal{X}}(z) = \sum_j \left(\nabla_{\mathcal{X}} \mathcal{Y}_j \right) \frac{\partial z}{\partial \mathcal{Y}_j}\)</span>
+<ul>
+<li>e.g. consider a matrix multiplication operation creating a variable <span class="math inline">\(\mathbf{C} = \mathbf{AB}\)</span>
+<ul>
+<li>let the gradient of a scalar <span class="math inline">\(z\)</span> w.r.t. <span class="math inline">\(\mathbf{C}\)</span> is given by <span class="math inline">\(\mathbf{G}\)</span></li>
+<li>the matrix multiplication operation is responsible for defining two backprop rules, one for each of its input arguments:
+<ul>
+<li>if we call <code>bprop</code> to request the gradient w.r.t. <span class="math inline">\(\mathbf{A}\)</span> given that the gradient on the output is <span class="math inline">\(\mathbf{G}\)</span>, <code>bprop</code> must state that the gradient w.r.t. <span class="math inline">\(\mathbf{A}\)</span> is given by <span class="math inline">\(\mathbf{GB}^T\)</span></li>
+<li>if we call <code>bprop</code> to request the gradient w.r.t. <span class="math inline">\(\mathbf{B}\)</span>, <code>bprop</code> must state that the gradient is <span class="math inline">\(\mathbf{A}^T\mathbf{G}\)</span></li>
+<li>the backprop algorithm does not need to know any differentiation rules
+<ul>
+<li>it only needs to call each operation’s <code>bprop</code> rules with the right arguments</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><p>formally, <span class="math inline">\(\texttt{op.bprop}\left(\texttt{inputs}, \mathcal{X}, \mathcal{G} \right)\)</span> must return</p>
+<span class="math display">\[
+  \sum_i \left(\nabla_{\mathcal{X}} \texttt{op.f} \left(\texttt{inputs} \right)_i \right) \mathcal{G}_i
+  \]</span>
+<ul>
+<li><span class="math inline">\(\texttt{inputs}\)</span>: list of inputs supplied to the operation</li>
+<li><span class="math inline">\(\texttt{op.f}\)</span>: the mathematical function that the operation implements</li>
+<li><span class="math inline">\(\mathcal{X}\)</span>: the input whose gradient we wish to compute</li>
+<li><span class="math inline">\(\mathcal{G}\)</span>: the gradient on the output of the operation<br />
+</li>
+</ul></li>
+<li>the <span class="math inline">\(\texttt{op.brop}\)</span> method should always treat all of its inputs as distinct from each other, even if they are not
+<ul>
+<li>e.g. if two copies of <span class="math inline">\(x\)</span> are input to compute <span class="math inline">\(x^2\)</span>, the derivative w.r.t. each input should still be <span class="math inline">\(x\)</span></li>
+</ul></li>
+<li>software implementations of backprop usually provide both the operations and their <code>bprop</code> methods
+<ul>
+<li>if building a new implementation of backprop or adding a custom operation to an existing library, usually need to derive the <code>op.bprop</code> method for the new operation</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><strong><em>Algorithm 6.5: the back-propagation algorithm</em></strong>
+<ul>
+<li>this is the outermost skeleton, for simple setup and cleanup</li>
+<li>most of the important work happens in the <code>build_grad</code> subroutine of Algorithm 6.6</li>
+<li><strong>require:</strong> <span class="math inline">\(\mathbb{T}\)</span>, the target set of variables whose gradients must be computed</li>
+<li><strong>require:</strong> <span class="math inline">\(\mathcal{G}\)</span>, the computational graph</li>
+<li><strong>require:</strong> <span class="math inline">\(z\)</span>, the varaiable to be differentiated
+<ul>
+<li>Let <span class="math inline">\(\mathcal{G}^\prime\)</span> be <span class="math inline">\(\mathcal{G}\)</span> pruned to contain only nodes that are ancestors of <span class="math inline">\(z\)</span> and descendents of nodes in <span class="math inline">\(\mathbb{T}\)</span></li>
+<li>Initialize <code>grad_table</code>, a data structure associating tensors to their gradients</li>
+<li><code>grad_table</code><span class="math inline">\([z] \gets 1\)</span></li>
+<li><strong>for</strong> <span class="math inline">\(\mathcal{V}\)</span> in <span class="math inline">\(\mathbb{T}\)</span> <strong>do</strong>
+<ul>
+<li><code>build_grad</code><span class="math inline">\(( \mathcal{V}, \mathcal{G}, \mathcal{G}^\prime,\)</span><code>grad_table</code><span class="math inline">\()\)</span></li>
+</ul></li>
+<li><strong>end for</strong></li>
+<li>return <code>grad_table</code> restricted to <span class="math inline">\(\mathbb{T}\)</span></li>
 </ul></li>
 </ul></li>
 </ul>

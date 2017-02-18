@@ -137,11 +137,29 @@ $(document).ready(function () {
 <li><a href="#trading-off-bias-and-variance-to-minimize-mean-squared-error"><strong>5.4.4 Trading off Bias and Variance to Minimize Mean Squared Error</strong></a></li>
 <li><a href="#consistency"><strong>5.4.5 Consistency</strong></a></li>
 </ul></li>
-<li><a href="#maximum-likelihood-estimation"><strong>5.5 Maximum Likelihood Estimation</strong></a></li>
+<li><a href="#maximum-likelihood-estimation"><strong>5.5 Maximum Likelihood Estimation</strong></a><ul>
+<li><a href="#conditional-log-likelihood-and-mean-squared-error"><strong>5.5.1 Conditional Log-Likelihood and Mean Squared Error</strong></a></li>
+<li><a href="#properties-of-maximum-likelihood"><strong>5.5.2 Properties of Maximum Likelihood</strong></a></li>
+</ul></li>
+<li><a href="#bayesian-statistics"><strong>5.6 Bayesian Statistics</strong></a><ul>
+<li><a href="#maximum-a-posteriori-map-estimation"><strong>5.6.1 Maximum A Posteriori (MAP) Estimation</strong></a></li>
+</ul></li>
+<li><a href="#supervised-learning-algorithms"><strong>5.7 Supervised Learning Algorithms</strong></a><ul>
+<li><a href="#probabilistic-supervised-learning"><strong>5.7.1 Probabilistic Supervised Learning</strong></a></li>
 <li><a href="#support-vector-machines"><strong>5.7.2 Support Vector Machines</strong></a></li>
+<li><a href="#other-simple-supervised-learning-algorithms"><strong>5.7.3 Other Simple Supervised Learning Algorithms</strong></a></li>
+</ul></li>
+<li><a href="#unsupervised-learning-algorithms"><strong>5.8 Unsupervised Learning Algorithms</strong></a><ul>
+<li><a href="#principal-components-analysis"><strong>5.8.1 Principal Components Analysis</strong></a></li>
+<li><a href="#k-means-clustering"><strong>5.8.2 <span class="math inline">\(k\)</span>-means Clustering</strong></a></li>
+</ul></li>
 <li><a href="#stochastic-gradient-descent"><strong>5.9 Stochastic Gradient Descent</strong></a></li>
 <li><a href="#building-an-ml-algorithm"><strong>5.10 Building an ML algorithm</strong></a></li>
-<li><a href="#challenges-motivating-deep-learning"><strong>5.11 Challenges Motivating Deep Learning</strong></a></li>
+<li><a href="#challenges-motivating-deep-learning"><strong>5.11 Challenges Motivating Deep Learning</strong></a><ul>
+<li><a href="#the-curse-of-dimensionality"><strong>5.11.1 The Curse of Dimensionality</strong></a></li>
+<li><a href="#local-constancy-and-smoothness-regularization"><strong>5.11.2 Local Constancy and Smoothness Regularization</strong></a></li>
+<li><a href="#manifold-learning"><strong>5.11.3 Manifold Learning</strong></a></li>
+</ul></li>
 </ul>
 </div>
 
@@ -443,7 +461,7 @@ p(y \mid \mathbf{x}) = \frac{p(\mathbf{x},y)}{\sum_{y^\prime}p(\mathbf{x}, y^\pr
 <ul>
 <li><span class="math inline">\(\text{E} \left[\hat{\theta}_m \right] = \theta\)</span>, so the estimator is unbiased no matter how many data points are seen
 <ul>
-<li>therefore, the estiamte is asymptotically unbiased</li>
+<li>therefore, the estimate is asymptotically unbiased</li>
 <li>however, it is <strong>not</strong> a consistent estimator, since it is <strong>not</strong> the case that <span class="math inline">\(\hat{\theta}_m \to \theta\)</span> as <span class="math inline">\(m \to \infty\)</span>.</li>
 </ul></li>
 </ul></li>
@@ -473,10 +491,27 @@ D_{\text{KL}}(\hat p_{\text{data}} \parallel p_{\text{model}}) = \text{E}_{\math
 \]</span> , which is the same as the maximization above.</p>
 <p>Minimizing the KL divergence corresponds exactly to minimizing the cross-entropy between the distributions.</p>
 <p>We can thus see MLE as an attempt to make the model distribution match the empirical distribution <span class="math inline">\(\hat p_{\text{data}}\)</span>, in lieu of matching the true generating distribution <span class="math inline">\(p_{\text{data}}\)</span> which we do not have direct access to.</p>
-<p>Maximum likelihood = minimization of the negative log-likelihood (NLL)= minimization of cross-entropy.</p>
+<p>Maximum likelihood = minimization of the negative log-likelihood (NLL) = minimization of cross-entropy.</p>
+<div id="conditional-log-likelihood-and-mean-squared-error" class="section level3">
+<h3><strong>5.5.1 Conditional Log-Likelihood and Mean Squared Error</strong></h3>
 </div>
-<div id="support-vector-machines" class="section level2">
-<h2><strong>5.7.2 Support Vector Machines</strong></h2>
+<div id="properties-of-maximum-likelihood" class="section level3">
+<h3><strong>5.5.2 Properties of Maximum Likelihood</strong></h3>
+</div>
+</div>
+<div id="bayesian-statistics" class="section level2">
+<h2><strong>5.6 Bayesian Statistics</strong></h2>
+<div id="maximum-a-posteriori-map-estimation" class="section level3">
+<h3><strong>5.6.1 Maximum A Posteriori (MAP) Estimation</strong></h3>
+</div>
+</div>
+<div id="supervised-learning-algorithms" class="section level2">
+<h2><strong>5.7 Supervised Learning Algorithms</strong></h2>
+<div id="probabilistic-supervised-learning" class="section level3">
+<h3><strong>5.7.1 Probabilistic Supervised Learning</strong></h3>
+</div>
+<div id="support-vector-machines" class="section level3">
+<h3><strong>5.7.2 Support Vector Machines</strong></h3>
 <p>A discriminative model driven by a linear function <span class="math inline">\(\mathbf{w}^T\mathbf{x}\)</span>. Predicts positive class when <span class="math inline">\(\mathbf{w}^T\mathbf{x}\)</span> is positive, negative class when <span class="math inline">\(\mathbf{w}^T\mathbf{x}\)</span> is negative.</p>
 <p>The <strong><em>kernel trick</em></strong>– many ML algorithms can be written exclusively in terms of dot products between examples, e.g. <span class="math display">\[
 \mathbf{w}^T\mathbf{x} = \sum_{i=1}^m\alpha_i \mathbf{x}^T \mathbf{x}^{(i)}
@@ -486,6 +521,19 @@ f(\mathbf{x}) = \sum_i\alpha_i k\left(\mathbf{x}, \mathbf{x}^{(i)} \right)
 <p>This function is nonlinear with respect to <span class="math inline">\(\mathbf{x}\)</span>, but the relationship between <span class="math inline">\(\phi(\mathbf{x})\)</span> and <span class="math inline">\(f(\mathbf{x})\)</span> is linear. Also, the relationship between <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(f(\mathbf{x})\)</span> is linear. The kernel-based function is exactly equivalent to preprocessing the data by applying <span class="math inline">\(\phi(\mathbf{x})\)</span> to all inputs, then learning a linear model in the new transformed space.</p>
 <p>The kernel trick is powerful for two reasons. First, it allows us to learn models that are nonlinear as a function of <span class="math inline">\(\mathbf{x}\)</span> using convex optimization techniques that are guaranteed to converge efficiently. This is possible because we consider <span class="math inline">\(\phi\)</span> fixed and optimize only <span class="math inline">\(\mathbf{\alpha}\)</span>, i.e., the optimziation algorithm can view the decision function as being linear in a different space. Second, the kernel function <span class="math inline">\(k\)</span> often admits an implementation that is significantly more computational efficient than naively constructing two <span class="math inline">\(\phi(\mathbf{x})\)</span> vectors and explicitly taking their dot product.</p>
 <p>In some cases, <span class="math inline">\(\phi(\mathbf{x})\)</span> can even be infinite dimensional, which would result in an infinite computational cost for the naive, explicit approach. In many cases, <span class="math inline">\(k(\mathbf{x}, \mathbf{x^\prime})\)</span> is a nonlinear, tractable function of <span class="math inline">\(\mathbf{X}\)</span> even when <span class="math inline">\(\phi(\mathbf{x})\)</span> is intractable. For example, construct a feature mapping <span class="math inline">\(\phi(x)\)</span> over the non-negative integers <span class="math inline">\(x\)</span>. Suppose that this mapping returns a vector containing <span class="math inline">\(x\)</span> ones followed by infinitely many zeros. The kernel function <span class="math inline">\(k(x, x^{(i)}) = \min(x, x^{(i)})\)</span> is exactly equivalent to the corresponding infinite-dimensional dot product.</p>
+</div>
+<div id="other-simple-supervised-learning-algorithms" class="section level3">
+<h3><strong>5.7.3 Other Simple Supervised Learning Algorithms</strong></h3>
+</div>
+</div>
+<div id="unsupervised-learning-algorithms" class="section level2">
+<h2><strong>5.8 Unsupervised Learning Algorithms</strong></h2>
+<div id="principal-components-analysis" class="section level3">
+<h3><strong>5.8.1 Principal Components Analysis</strong></h3>
+</div>
+<div id="k-means-clustering" class="section level3">
+<h3><strong>5.8.2 <span class="math inline">\(k\)</span>-means Clustering</strong></h3>
+</div>
 </div>
 <div id="stochastic-gradient-descent" class="section level2">
 <h2><strong>5.9 Stochastic Gradient Descent</strong></h2>
@@ -522,6 +570,15 @@ J(\mathbf{\theta}) = \text{E}_{\mathbf{X},y\sim\hat p_{\text{data}}} L(\mathbf{x
 </div>
 <div id="challenges-motivating-deep-learning" class="section level2">
 <h2><strong>5.11 Challenges Motivating Deep Learning</strong></h2>
+<div id="the-curse-of-dimensionality" class="section level3">
+<h3><strong>5.11.1 The Curse of Dimensionality</strong></h3>
+</div>
+<div id="local-constancy-and-smoothness-regularization" class="section level3">
+<h3><strong>5.11.2 Local Constancy and Smoothness Regularization</strong></h3>
+</div>
+<div id="manifold-learning" class="section level3">
+<h3><strong>5.11.3 Manifold Learning</strong></h3>
+</div>
 </div>
 
 
