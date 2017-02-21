@@ -128,6 +128,7 @@ $(document).ready(function () {
 <li><a href="#back-propagation-computation-in-fully-connected-mlp"><strong>6.5.4 Back-Propagation Computation in Fully-Connected MLP</strong></a></li>
 <li><a href="#symbol-to-symbol-derivatives"><strong>6.5.5 Symbol-to-Symbol Derivatives</strong></a></li>
 <li><a href="#general-back-propagation"><strong>6.5.6 General Back-Propagation</strong></a></li>
+<li><a href="#backprop-for-mlp-training"><strong>6.5.7 Backprop for MLP Training</strong></a></li>
 </ul></li>
 </ul>
 </div>
@@ -325,7 +326,7 @@ $(document).ready(function () {
 <ul>
 <li><code>grad_table</code><span class="math inline">\(\left[u^{(i)} \right] = \frac{\partial u^{(n)}}{\partial u^{(i)}}\)</span></li>
 </ul></li>
-<li><code>grad_table</code><span class="math inline">\(\left[\partial u^{(n)} \right] \gets 1\)</span></li>
+<li><code>grad_table</code><span class="math inline">\(\left[u^{(n)} \right] \gets 1\)</span></li>
 <li><strong>for</strong> <span class="math inline">\(j = n-1\)</span> down to 1 <strong>do</strong>
 <ul>
 <li><code>grad_table</code><span class="math inline">\(\left[u^{(j)} \right] \gets \sum_{i:j \in \text{Pa}\left( u^{(i)}\right)}\)</span><code>grad_table</code><span class="math inline">\(\left[u^{(i)} \right] \frac{\partial u^{(i)}}{\partial u^{(j)}}\)</span>
@@ -531,6 +532,104 @@ $(document).ready(function () {
 </ul></li>
 <li><strong>end for</strong></li>
 <li>return <code>grad_table</code> restricted to <span class="math inline">\(\mathbb{T}\)</span></li>
+</ul></li>
+</ul></li>
+<li><strong><em>Algorithm 6.6: the inner loop subroutine</em></strong> <code>build_grad</code><span class="math inline">\((\mathcal{V}, \mathcal{G}, \mathcal{G}^\prime,\)</span><code>grad_table</code><span class="math inline">\()\)</span>
+<ul>
+<li><strong>require</strong> <span class="math inline">\(\mathcal{V}\)</span>, the variable whose gradient should be added to <span class="math inline">\(\mathcal{G}\)</span> and <code>grad_table</code></li>
+<li><strong>require</strong> <span class="math inline">\(\mathcal{G}\)</span>, the graph to modify</li>
+<li><strong>require</strong> <span class="math inline">\(\mathcal{G}^\prime\)</span>, the restriction of <span class="math inline">\(\mathcal{G}\)</span> to nodes that participate in the gradient</li>
+<li><strong>require</strong> <code>grad_table</code>, a data structure mapping nodes to their gradients
+<ul>
+<li><strong>if</strong> <span class="math inline">\(\mathcal{V}\)</span> is in <code>grad_table</code> <strong>then</strong>
+<ul>
+<li>return <code>grad_table</code><span class="math inline">\([\mathcal{V}]\)</span></li>
+</ul></li>
+<li><strong>end if</strong></li>
+<li><span class="math inline">\(i \gets 1\)</span></li>
+<li><strong>for</strong> <span class="math inline">\(\mathcal{C}\)</span> in <code>get_consumers</code><span class="math inline">\((\mathcal{V}, \mathcal{G})\)</span> <strong>do</strong>
+<ul>
+<li><span class="math inline">\(\texttt{op} \gets \texttt{get_operation}(\mathcal{C})\)</span></li>
+<li><span class="math inline">\(\mathcal{D} \gets \texttt{build_grad}\left(\mathcal{V}, \mathcal{G}, \mathcal{G}^\prime, \texttt{grad_table} \right)\)</span></li>
+<li><span class="math inline">\(\mathbf{G}^{(i)} \gets \texttt{op.bprop}\left(\texttt{get_inputs}\left(\mathcal{C}, \mathcal{G}^\prime \right), \mathcal{V}, \mathcal{D} \right)\)</span></li>
+<li><span class="math inline">\(i \gets i + 1\)</span></li>
+</ul></li>
+<li><strong>end for</strong></li>
+<li><span class="math inline">\(\mathbf{G} \gets \sum_i \mathbf{G}^{(i)}\)</span></li>
+<li><code>grad_table</code><span class="math inline">\([\mathcal{V}] = \mathbf{G}\)</span></li>
+<li>insert <span class="math inline">\(\mathbf{G}\)</span> and the operations creating it into <span class="math inline">\(\mathcal{G}\)</span></li>
+<li><strong>return</strong> <span class="math inline">\(\mathbf{G}\)</span></li>
+</ul></li>
+</ul></li>
+<li>with the algorithm specified, we can examine the computational cost
+<ul>
+<li>assume that each operation evaluation has roughly the same cost, and then analyze the computational cost in terms of the number of operations executed
+<ul>
+<li>note: we refer to an operation as the fundamental unit of the computational graph, though each could consist of several arithmetic operations (e.g. a matrix multiplication is one operation but can be many arithmetic operations)</li>
+<li>then, computing a gradient with <span class="math inline">\(n\)</span> nodes will never execute more than <span class="math inline">\(O(n^2)\)</span> operations or store the output of more than <span class="math inline">\(O(n^2)\)</span> operations
+<ul>
+<li>the backprop algorithm adds one Jacobian-vector product, expressed with <span class="math inline">\(O(1)\)</span> nodes, per edge in the original graph</li>
+<li>since the computational graph is a directed acyclic graph, it has at most <span class="math inline">\(O(n^2)\)</span> edges</li>
+<li>for the graphs used in practice, the situation is better:
+<ul>
+<li>most neural networks are roughly chain-structured, causing backprop to have <span class="math inline">\(O(n)\)</span> cost</li>
+</ul></li>
+<li>the potentially exponential cost can be seen by expanding and rewriting the recursive chain rule non-recursively:</li>
+</ul>
+<span class="math display">\[
+  \begin{align}
+  \frac{\partial u^{(n)}}{\partial u^{(j)}} &amp; = \sum_{i:j \in \text{Pa}\left(u^{(i)} \right)} \frac{\partial u^{(n)}}{\partial u^{(i)}} \frac{\partial u^{(i)}}{\partial u^{(j)}} \\
+  \frac{\partial u^{(n)}}{\partial u^{(j)}} &amp; = \sum_{\substack{{\text{path} \left(u^{(\pi_1)}, u^{(\pi_2)}, \dots, u^{(\pi_t)} \right),} \\{ \text{ from } \pi_1=j \text{ to } \pi_t=n}}} \prod_{k=2}^t \frac{\partial u^{(\pi_k)}}{\partial u^{(\pi_{k-1})}} &amp; \substack{{\text{i.e. sum over all paths from } u^{(j)} \text{ to } u^{(n)},} \\ { \text{multiplying all derivatives along each path}}}\\
+  \end{align}
+  \]</span>
+<ul>
+<li>the number of paths from node <span class="math inline">\(j\)</span> to node <span class="math inline">\(n\)</span> can grow exponentially in the length of these paths
+<ul>
+<li>therefore, the number of terms in the sum above (which is the number of paths), can grow exponentially with the depth of the forward propagation graph
+<ul>
+<li>the large computational cost is incurred when <span class="math inline">\(\frac{\partial u^{(i)}}{\partial u^{(j)}}\)</span> is recalculated many times</li>
+<li>backprop is a <strong><em>dynamic programming</em></strong> strategy to avoid these recomputations
+<ul>
+<li>it can be thought of as a table-filling algorithm that takes advantage of storing intermediate results <span class="math inline">\(\frac{\partial u^{(n)}}{\partial u^{(i)}}\)</span></li>
+<li>each node in the graph has a corresponding slot in a table to store the gradient for that node
+<ul>
+<li>by filling in these table entries in order, backprop avoids repeating evaluating common subexpressions</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="backprop-for-mlp-training" class="section level3">
+<h3><strong>6.5.7 Backprop for MLP Training</strong></h3>
+<ul>
+<li>consider a simple multilayer perceptron with a single hidden layer
+<ul>
+<li>train with minibatch stochastic gradient descent</li>
+<li>backprop is used to compute the gradient of the cost on a single minibatch
+<ul>
+<li><span class="math inline">\(\mathbf{X}\)</span>: a design matrix representing a minibatch of examples from the training set</li>
+<li><span class="math inline">\(\mathbf{y}\)</span>: vector of associated class labels</li>
+<li><span class="math inline">\(\mathbf{H} = \max \left\{0, \mathbf{X,W}^{(1)} \right\}\)</span>
+<ul>
+<li>simplify by assuming no biases in the model</li>
+</ul></li>
+<li>assume the existence of <span class="math inline">\(\texttt{relu}\)</span> operation that computes <span class="math inline">\(\max \left\{0, \mathbf{Z} \right\}\)</span> elementwise</li>
+<li>predictions of the unnormalized log probabilities over classes are given by <span class="math inline">\(\mathbf{HW}^{(2)}\)</span></li>
+<li>assume the existence of a <span class="math inline">\(\texttt{cross_entropy}\)</span> operation that computes the cross-entropy between the targets <span class="math inline">\(\mathbf{y}\)</span> and the probability distribution defined by these unnormalized log probabilities
+<ul>
+<li>the resulting cross-entropy defines the cost <span class="math inline">\(J_{\text{MLE}}\)</span>
+<ul>
+<li>minimizing the cross-entropy = maximum likelihood estimation of the classifier</li>
+</ul></li>
+<li>also include a regularization term:</li>
+</ul>
+<span class="math display">\[
+  J = J_{\text{MLE}} + \lambda \left(\sum_{i,j} \left(W_{i,j}^{(1)} \right)^2 + \sum_{i,j} \left(W_{i,j}^{(2)} \right)^2 \right)
+  \]</span></li>
 </ul></li>
 </ul></li>
 </ul>

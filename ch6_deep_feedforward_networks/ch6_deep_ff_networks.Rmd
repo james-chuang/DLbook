@@ -132,7 +132,7 @@ knitr::opts_chunk$set(echo = TRUE)
               - run forward propagation (Algorithm 6.1) to obtain network activations
               - initialize `grad_table`: a data structure that will store the computed derivatives
                   - `grad_table`$\left[u^{(i)} \right] = \frac{\partial u^{(n)}}{\partial u^{(i)}}$
-              - `grad_table`$\left[\partial u^{(n)} \right] \gets 1$
+              - `grad_table`$\left[u^{(n)} \right] \gets 1$
               - **for** $j = n-1$ down to 1 **do**
                   - `grad_table`$\left[u^{(j)} \right] \gets \sum_{i:j \in \text{Pa}\left( u^{(i)}\right)}$`grad_table`$\left[u^{(i)} \right] \frac{\partial u^{(i)}}{\partial u^{(j)}}$
                       - this computes $\frac{\partial u^{(n)}}{\partial u^{(j)}} = \sum_{i:j\in \text{Pa}\left(u^{(i)} \right)} \frac{\partial u^{(n)}}{\partial u^{(i)}} \frac{\partial u^{(i)}}{\partial u^{(j)}}$
@@ -250,3 +250,65 @@ knitr::opts_chunk$set(echo = TRUE)
               - `build_grad`$( \mathcal{V}, \mathcal{G}, \mathcal{G}^\prime,$`grad_table`$)$
           - **end for**
           - return `grad_table` restricted to $\mathbb{T}$
+  - ***Algorithm 6.6: the inner loop subroutine*** `build_grad`$(\mathcal{V}, \mathcal{G}, \mathcal{G}^\prime,$`grad_table`$)$
+      - **require** $\mathcal{V}$, the variable whose gradient should be added to $\mathcal{G}$ and `grad_table`
+      - **require** $\mathcal{G}$, the graph to modify
+      - **require** $\mathcal{G}^\prime$, the restriction of $\mathcal{G}$ to nodes that participate in the gradient
+      - **require** `grad_table`, a data structure mapping nodes to their gradients
+          - **if** $\mathcal{V}$ is in `grad_table` **then**
+              - return `grad_table`$[\mathcal{V}]$
+          - **end if**
+          - $i \gets 1$
+          - **for** $\mathcal{C}$ in `get_consumers`$(\mathcal{V}, \mathcal{G})$ **do**
+              - $\texttt{op} \gets \texttt{get_operation}(\mathcal{C})$
+              - $\mathcal{D} \gets \texttt{build_grad}\left(\mathcal{V}, \mathcal{G}, \mathcal{G}^\prime, \texttt{grad_table} \right)$
+              - $\mathbf{G}^{(i)} \gets \texttt{op.bprop}\left(\texttt{get_inputs}\left(\mathcal{C}, \mathcal{G}^\prime \right), \mathcal{V}, \mathcal{D} \right)$
+              - $i \gets i + 1$
+          - **end for**
+          - $\mathbf{G} \gets \sum_i \mathbf{G}^{(i)}$
+          - `grad_table`$[\mathcal{V}] = \mathbf{G}$
+          - insert $\mathbf{G}$ and the operations creating it into $\mathcal{G}$
+          - **return** $\mathbf{G}$
+  - with the algorithm specified, we can examine the computational cost
+      - assume that each operation evaluation has roughly the same cost, and then analyze the computational cost in terms of the number of operations executed
+          - note: we refer to an operation as the fundamental unit of the computational graph, though each could consist of several arithmetic operations (e.g. a matrix multiplication is one operation but can be many arithmetic operations)
+          - then, computing a gradient with $n$ nodes will never execute more than $O(n^2)$ operations or store the output of more than $O(n^2)$ operations
+              - the backprop algorithm adds one Jacobian-vector product, expressed with $O(1)$ nodes, per edge in the original graph
+              - since the computational graph is a directed acyclic graph, it has at most $O(n^2)$ edges
+              - for the graphs used in practice, the situation is better:
+                  - most neural networks are roughly chain-structured, causing backprop to have $O(n)$ cost
+              - the potentially exponential cost can be seen by expanding and rewriting the recursive chain rule non-recursively:
+              
+              $$
+              \begin{align}
+              \frac{\partial u^{(n)}}{\partial u^{(j)}} & = \sum_{i:j \in \text{Pa}\left(u^{(i)} \right)} \frac{\partial u^{(n)}}{\partial u^{(i)}} \frac{\partial u^{(i)}}{\partial u^{(j)}} \\
+              \frac{\partial u^{(n)}}{\partial u^{(j)}} & = \sum_{\substack{{\text{path} \left(u^{(\pi_1)}, u^{(\pi_2)}, \dots, u^{(\pi_t)} \right),} \\{ \text{ from } \pi_1=j \text{ to } \pi_t=n}}} \prod_{k=2}^t \frac{\partial u^{(\pi_k)}}{\partial u^{(\pi_{k-1})}} & \substack{{\text{i.e. sum over all paths from } u^{(j)} \text{ to } u^{(n)},} \\ { \text{multiplying all derivatives along each path}}}\\
+              \end{align}
+              $$
+              - the number of paths from node $j$ to node $n$ can grow exponentially in the length of these paths
+                  - therefore, the number of terms in the sum above (which is the number of paths), can grow exponentially with the depth of the forward propagation graph
+                      - the large computational cost is incurred when $\frac{\partial u^{(i)}}{\partial u^{(j)}}$ is recalculated many times
+                      - backprop is a ***dynamic programming*** strategy to avoid these recomputations
+                          - it can be thought of as a table-filling algorithm that takes advantage of storing intermediate results $\frac{\partial u^{(n)}}{\partial u^{(i)}}$
+                          - each node in the graph has a corresponding slot in a table to store the gradient for that node
+                              - by filling in these table entries in order, backprop avoids repeating evaluating common subexpressions
+                              
+### **6.5.7 Backprop for MLP Training**
+
+  - consider a simple multilayer perceptron with a single hidden layer
+      - train with minibatch stochastic gradient descent
+      - backprop is used to compute the gradient of the cost on a single minibatch
+          - $\mathbf{X}$: a design matrix representing a minibatch of examples from the training set
+          - $\mathbf{y}$: vector of associated class labels
+          - $\mathbf{H} = \max \left\{0, \mathbf{XW}^{(1)} \right\}$
+              - simplify by assuming no biases in the model
+          - assume the existence of $\texttt{relu}$ operation that computes $\max \left\{0, \mathbf{Z} \right\}$ elementwise
+          - predictions of the unnormalized log probabilities over classes are given by $\mathbf{HW}^{(2)}$
+          - assume the existence of a $\texttt{cross_entropy}$ operation that computes the cross-entropy between the targets $\mathbf{y}$ and the probability distribution defined by these unnormalized log probabilities
+              - the resulting cross-entropy defines the cost $J_{\text{MLE}}$
+                  - minimizing the cross-entropy = maximum likelihood estimation of the classifier
+              - also include a regularization term:
+              
+              $$
+              J = J_{\text{MLE}} + \lambda \left(\sum_{i,j} \left(W_{i,j}^{(1)} \right)^2 + \sum_{i,j} \left(W_{i,j}^{(2)} \right)^2 \right)
+              $$
