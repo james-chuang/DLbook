@@ -91,15 +91,19 @@ In using a ML algorithm, we sample the training set, use it to choose parameters
   - make the training error small
   - make the gap between training and test error small
   
-***Underfitting***-- when a model is unable to obtain a sufficiently low training error
-***Overfitting***-- when the gap between training and test error is too large
+  - ***Underfitting***
+      - when a model is unable to obtain a sufficiently low training error
+  - ***Overfitting***
+      - when the gap between training and test error is too large
 
 Under- vs. overfitting is controlled by a model's ***capacity*** (flexibility/degrees of freedom, etc.). ML algorithms generally perform best when their capacity is appropriate for the true complexity of the task they need to perform and the amount of training data provided.
 
-***Representational capacity***-- determined by the family of functions to choose from when varying parameters
-***Effective capacity***-- the actual capacity of the algorithm, limited by the imperfection of optimization
+  - ***Representational capacity***
+      - determined by the family of functions to choose from when varying parameters
+  - ***Effective capacity***
+      - the actual capacity of the algorithm, limited by the imperfection of optimization
 
-The most well-known means of quantifying model capacity is the ***Vapnik-Chervonenkis dimension***, or VC dimension. The VC dimension measures the capacity of a binary classifier, and is defined as being the largest possible value of $m$ for which there exists a training set of $m$ different $\mathbf{x}$ points that the classifier can label arbitrarily.
+The most well-known means of quantifying model capacity is the ***Vapnik-Chervonenkis dimension***, or VC dimension. The VC dimension measures the capacity of a binary classifier, and is defined as being the largest possible value of $m$ for which there exists a training set of $m$ different $\mathbf{x}$ points that the classifier can label arbitrarily (See CS229 notes 4 for more).
 
 ## **5.3 Hyperparameters and Validation Sets**
 
@@ -156,7 +160,7 @@ Statistical concepts such as ***parameter estimation***, ***bias***, and ***vari
           - $\hat{f}$ is really just a point estimator in function space
               - e.g., linear regression can be interpreted as estimating a parameter $\mathbf{w}$ or estimating a function $\hat{f}$ mapping $\mathbf{x}$ to $y$
                 
-Now for commonly studied properties of point estimators
+Now for commonly studied properties of point estimators:
 
 ### **5.4.2 Bias**
 
@@ -172,13 +176,13 @@ $$
       - ***asymptotically unbiased*** if $\lim_{m \to \infty} \text{bias} \left(\hat{\theta}_m \right) = 0$
           - i.e., $\lim_{m \to \infty} \text{E} \left(\hat{\theta}_m \right)$
   - unbiased estimators are clearly desirable, but are not always the "best"
-      - we may take an increase in bias if it is results in a reduction in variance
+      - we may take an increase in bias if it results in a reduction in variance
       
 ### **5.4.3 Variance and Standard Error**
 
 How much do we expect an estimator to vary as a function of the data sample?
 
-The ***variance*** of an estimator is simply the variance (thanks for this amazing insight, Deep Learning Book!):
+The ***variance*** of an estimator is simply the variance (...what an amazing insight!):
 $$
 \begin{align}
 \text{Var} \left(\hat{\theta} \right) & = \text{E} \left[ \left(\hat{\theta} - \text{E} \left[ \hat{\theta}\right]\right)^2\right] \\
@@ -199,7 +203,7 @@ where $\sigma^2$ is the true variance of the samples $x^i$. The standard error i
 
   - SEM is often useful in ML: the generalization error is often estimated by computing the sample mean of the test set error
       - the accuracy of this estimate is determined by the size of the test set
-      - taking advantage of the central limit theorem (i.e., the mean is approxiamtely distributed with a normal distribution), the standard error can be used to compute the probability that the true expectation falls in any chosen interval (think 95% confidence intervals).
+      - taking advantage of the central limit theorem (i.e., the mean is approximately distributed with a normal distribution), the standard error can be used to compute the probability that the true expectation falls in any chosen interval (think 95% confidence intervals).
           - in ML, it is common to say that an algorithm is better than another if the upper bound of the 95% CI for error of the first algorithm is less than the lower bound of the 95% CI of the other
       
 ### **5.4.4 Trading off Bias and Variance to Minimize Mean Squared Error** 
@@ -259,11 +263,11 @@ Let $p_{\text{model}}(\mathbf{x}; \mathbf{\theta})$ be a parametric family of pr
 The maximum likelihood estimator for $\mathbf{\theta}$ is then defined as:
 $$
 \begin{align}
-\mathbf{\theta}_{ML}  & = \underset{\theta}{\text{argmax }} p_{\text{model}}(\mathbb{X}; \mathbf{\theta}) \\
-                      & = \underset{\theta}{\text{argmax }} \prod_{i=1}^m p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) & \text{samples i.i.d.}\\
-                      & = \underset{\theta}{\text{argmax }} \sum_{i=1}^m \log p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) & \text{to avoid underflow} \\
-                      & = \underset{\theta}{\text{argmax }} \frac{1}{m}\sum_{i=1}^m \log p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) & \text{argmax is unchanged by rescaling} \\
-                      & = \underset{\theta}{\text{argmax }} \text{E}_{\mathbf{X}\sim \hat p_{\text{data}}} \log p_{\text{model}}(\mathbf{x} ; \mathbf{\theta})
+\mathbf{\theta}_{ML}  & = \arg \max_\theta p_{\text{model}}(\mathbb{X}; \mathbf{\theta}) \\
+                      & = \arg \max_\theta \prod_{i=1}^m p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) && \text{samples i.i.d.}\\
+                      & = \arg \max_\theta \sum_{i=1}^m \log p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) && \text{to avoid underflow} \\
+                      & = \arg \max_\theta \frac{1}{m}\sum_{i=1}^m \log p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) && \text{argmax is unchanged by rescaling} \\
+                      & = \arg \max_\theta \text{E}_{\mathbf{X}\sim \hat p_{\text{data}}} \log p_{\text{model}}(\mathbf{x} ; \mathbf{\theta})
 \end{align}
 $$
 One way to interpret MLE-- view it as minimizing the dissimilarity between the empirical distribution $\hat p_{\text{data}}$ defined by the training set and the model distribution, measured by the KL divergence.
@@ -284,9 +288,93 @@ Maximum likelihood = minimization of the negative log-likelihood (NLL) = minimiz
 
 ### **5.5.1 Conditional Log-Likelihood and Mean Squared Error**
 
+  - MLE can be generalized to the case where the goal is to estimate a conditional probability $P(\mathbf{y} \mid \mathbf{x}; \theta)$ in order to predict $\mathbf{y}$ given $\mathbf{x}$ (i.e., the supervised learning situation)
+  - let: 
+      - $\mathbf{X}$ represent the input
+      - $\mathbf{Y}$ represent the observed targets (labels)
+  - then, the conditional maximum likelihood estimator is:
+  
+  $$
+  \theta_{\text{ML}} = \arg \max_\theta P \left(\mathbf{Y} \mid \mathbf{X} ; \theta \right)
+  $$
+  
+  - if the samples are assumed to be i.i.d., then this can be decomposed:
+  
+  $$
+  \begin{align}
+  \theta_{\text{ML}}  & = \arg \max_\theta P \left(\mathbf{Y} \mid \mathbf{X} ; \theta \right) \\
+                      & = \arg \max_\theta \prod_{i=1}^m P \left(\mathbf{y}^{(i)} \mid \mathbf{x}^{(i)} ; \theta \right) && \text{examples i.i.d} \\
+                      & = \arg \max_\theta \sum_{i=1}^m \log P\left(\mathbf{y}^{(i)} \mid \mathbf{x}^{(i)} ; \theta \right) && \text{to avoid underflow}
+  \end{align}
+  $$
+
+  - **example**: Linear Regression is maximum likelihood estimation assuming Gaussian conditional distributions:
+      - think of the model producing a conditional distribution $p(y \mid \mathbf{x})$
+      - assume $p(y \mid \mathbf{x}) \mathcal{N} \left(y; \hat{y} \left(\mathbf{x}; \mathbf{w} \right), \sigma^2 \right)$ (this assumes constant $\sigma^2$)
+      
+      $$
+      \begin{align}
+      & \sum_{i=1}^m \log p\left(y^{(i)} \mid \mathbf{x}^{(i)}; \theta \right) && \substack{{\text{conditional log-likelihood,} \\{\text{assuming i.i.d examples}}}} \\
+      & \sum_{i=1}^m \log \left(\frac{1}{\sqrt{2 \sigma^2 \pi}} \exp  \frac{-\left\lVert\hat{y}^{(i)}- y^{(i)} \right\rVert^2}{2 \sigma^2} \right) && \text{def. Gaussian} \\
+      & - \sum_{i=1}^m \log \sigma - \sum_{i=1}^m \log \left(2 \pi \right)^{\frac{1}{2}} - \sum_{i=1}^m \frac{\lVert \hat{y}^{(i)} - y^{(i)}\rVert^2}{2 \sigma^2} \\
+      & - m \log \sigma - \frac{m}{2} \log \left(2 \pi \right) - \sum_{i=1}^m \frac{\lVert \hat{y}^{(i)} - y^{(i)}\rVert^2}{2 \sigma^2}
+      \end{align}
+      $$
+      - only the last term depends on the training data
+          - comparing this to MSE:
+          
+          $$
+          \text{MSE}_{\text{train}} = \frac{1}{m} \sum_{i=1}^m \left\lVert \hat{y}^{(i)} - y^{(i)}\right\rVert^2
+          $$
+        - , we see that minimizing MSE gives the same solution as maximizing the log-likelihood above
+
 ### **5.5.2 Properties of Maximum Likelihood**
 
+  - main appeal of the maximum likelihood estimator:
+      - it can be shown to be the best estimator asymptotically, in terms of its rate of convergence as the number of examples $m \rightarrow \infty$
+  - under appropriate conditions, MLE has the property of consistency. Conditions:
+      - the true distribution $p_{\text{data}}$ must lie within the model family $p_{\text{model}}(\cdot ; \theta)$
+          - otherwise, no estimator can recover $p_{\text{data}}$
+      - the true distribution $p_{\text{data}}$ must correspond to exactly one value of $\theta$
+          - otherwise, MLE can recover the correct $p_{\text{data}}$, but will not be able to determine which value of $\theta$ was used by the data generating process
+  - def ***statistic efficiency***: for a fixed number of examples $m$, an estimator with greater statistic efficiency will obtain a lower generalization error than an estimator with less statistic efficiency
+      - statistical efficiency is typically studied in the *parametric* case, where the goal is to identify the true parameter (as opposed to a function)
+      - one way to measure how close we are to a true parameter is by the expected mean squared error:
+          - the squared difference between the estimated and true parameter values, where the expectation is over $m$ training examples from the data generating distribution
+          - parametric MSE decreases as $m$ increases
+          - for $m$ large, the ***Cramér-Rao bound*** shows that no consistent estimator has a lower MSE than MLE
+  - for these reasons (consistency and efficiency), MLE is often the preferred estimator for machine learning
+      - when the number of examples is small enough to yield overfitting, regularization can be used to bias MLE such that it has less variance
+      
 ## **5.6 Bayesian Statistics**
+
+  - ***frequentist statistics***: estimate a single value of $\theta$, then make all predictions based on that estimate
+      - the true parameter $\theta$ is fixed but unknown
+      - the estimate $\hat{\theta}$ is a random variable (because it is a function of a random dataset)
+  - ***Bayesian statistics***: consider all possible values of $\theta$ when making a prediction
+      - use probability to reflect degrees of certainty of states of knowledge
+      - dataset is directly observed, and so is not random
+      - the true parameter $\theta$ is unknown or uncertain, and is therefore a random variable
+      - before observing data, represent knowledge of $\theta$ using the ***prior probability distribution***, $p(\theta)$ (aka ***the prior***)
+          - the prior is usually chosen to have high entropy to reflect a high degree of uncertainty in the value of $\theta$ before observing any data
+              - e.g. uniform distribution, Gaussian
+              - many priors instead reflect a preferene for "simpler" solutions 
+      - consider a set of data samples $\left\{x^{(1)}, \dots, x^{(m)} \right\}$
+          - the data affects our belief about $\theta$ by combining the data likelihood $p\left(x^{(1)}, \dots, x^{(m)} \mid \theta \right)$ with the prior using Bayes' rule:
+          
+          $$
+          \begin{align}
+          p\left( \theta \mid x^{(1)}, \dots, x^{(m)} \right) & = \frac{p\left(x^{(1)}, \dots, x^{(m)} \mid \theta \right) p(\theta)}{p\left(x^{(1)}, \dots, x^{(m)}\right)} \\
+          \text{posterior} & = \text{evidence} \cdot \text{prior}
+          \end{align}
+          $$
+      - the prior usually begins as a relatively uniform or Gaussian distribution with high entropy
+          - observation of the data causes the posterior to lose entropy and concentrate around a few highly likely values of the parameters
+      - two important differences relative to maximum likelihood estimation
+          - whereas MLE makes predictions using a point estimate of $\theta$, the Bayesian approach makes predictions using a full distribution over $\theta$
+              -
+          - whereas MLE addresses the uncertainty in a given point estimate of $\theta$ by evaluating its variance, the Bayesian approach deals with uncertainty in the estimator by integrating over the uncertainty
+              - this tends to protect well against overfitting
 
 ### **5.6.1 Maximum A Posteriori (MAP) Estimation**
 
@@ -308,7 +396,7 @@ $$
 
 This function is nonlinear with respect to $\mathbf{x}$, but the relationship between $\phi(\mathbf{x})$ and $f(\mathbf{x})$ is linear. Also, the relationship between $\alpha$ and $f(\mathbf{x})$ is linear. The kernel-based function is exactly equivalent to preprocessing the data by applying $\phi(\mathbf{x})$ to all inputs, then learning a linear model in the new transformed space.
 
-The kernel trick is powerful for two reasons. First, it allows us to learn models that are nonlinear as a function of $\mathbf{x}$ using convex optimization techniques that are guaranteed to converge efficiently. This is possible because we consider $\phi$ fixed and optimize only $\mathbf{\alpha}$, i.e., the optimziation algorithm can view the decision function as being linear in a different space. Second, the kernel function $k$ often admits an implementation that is significantly more computational efficient than naively constructing two $\phi(\mathbf{x})$ vectors and explicitly taking their dot product.
+The kernel trick is powerful for two reasons. First, it allows us to learn models that are nonlinear as a function of $\mathbf{x}$ using convex optimization techniques that are guaranteed to converge efficiently. This is possible because we consider $\phi$ fixed and optimize only $\mathbf{\alpha}$, i.e., the optimization algorithm can view the decision function as being linear in a different space. Second, the kernel function $k$ often admits an implementation that is significantly more computational efficient than naively constructing two $\phi(\mathbf{x})$ vectors and explicitly taking their dot product.
 
 In some cases, $\phi(\mathbf{x})$ can even be infinite dimensional, which would result in an infinite computational cost for the naive, explicit approach. In many cases, $k(\mathbf{x}, \mathbf{x^\prime})$ is a nonlinear, tractable function of $\mathbf{X}$ even when $\phi(\mathbf{x})$ is intractable. For example, construct a feature mapping $\phi(x)$ over the non-negative integers $x$. Suppose that this mapping returns a vector containing $x$ ones followed by infinitely many zeros. The kernel function $k(x, x^{(i)}) = \min(x, x^{(i)})$ is exactly equivalent to the corresponding infinite-dimensional dot product.
 
