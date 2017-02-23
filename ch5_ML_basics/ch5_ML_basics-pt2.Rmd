@@ -1,0 +1,381 @@
+---
+output:
+  html_document:
+    toc: TRUE
+    fig_width: 4.5
+    css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
+---
+
+Part 2 of my notes on chapter 5 of the [Deep Learning Book](www.deeplearningbook.org) on Machine Learning Basics (sections 5.5 to ).
+
+## **5.5 Maximum Likelihood Estimation**
+
+  - consider a set of $m$ examples $\mathbb{X} = \left\{\mathbf{x}^{(1)}, \dots, \mathbf{x}^{(m)} \right\}$ drawn independently from the true but unknown data generating distribution $p_{\text{data}}(\mathbf{x})$.
+  - let $p_{\text{model}}(\mathbf{x}; \mathbf{\theta})$ be a parametric family of probability distributions over the same space as $p_{\text{data}}(\mathbf{x})$, indexed by $\mathbf{\theta}$
+      - in other words, $p_{\text{model}}(\mathbf{x}; \mathbf{\theta})$ maps any configuration $\mathbf{x}$ to a real number estimating the true probability $p_{\text{data}}(\mathbf{x})$.
+  - the maximum likelihood estimator for $\mathbf{\theta}$ is then defined as:
+  
+  $$
+  \begin{align}
+  \mathbf{\theta}_{ML}  & = \arg \max_\theta p_{\text{model}}(\mathbb{X}; \mathbf{\theta}) \\
+                        & = \arg \max_\theta \prod_{i=1}^m p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) && \text{samples i.i.d.}\\
+                        & = \arg \max_\theta \sum_{i=1}^m \log p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) && \text{to avoid underflow} \\
+                        & = \arg \max_\theta \frac{1}{m}\sum_{i=1}^m \log p_{\text{model}}(\mathbf{x}^{(i)}; \mathbf{\theta}) && \text{argmax is unchanged by rescaling} \\
+                        & = \arg \max_\theta \text{E}_{\mathbf{X}\sim \hat p_{\text{data}}} \log p_{\text{model}}(\mathbf{x} ; \mathbf{\theta})
+  \end{align}
+  $$
+  
+  - one way to interpret MLE:
+      - view it as minimizing the dissimilarity between the empirical distribution $\hat p_{\text{data}}$ defined by the training set and the model distribution, measured by the KL divergence:
+      
+      $$
+      D_{\text{KL}}(\hat p_{\text{data}} \parallel p_{\text{model}}) = \text{E}_{\mathbf{X}\sim \hat p_{\text{data}}} \left[\log \hat p_{\text{data}}(\mathbf{x}) - \log p_{\text{model}}(\mathbf{x}) \right]
+      $$
+      - the left term, $\log \hat p_{\text{data}}(\mathbf{x})$, is a function only of the data generating process, and not of the model
+          - this means when we train the model to minimize the KL divergence, we need only minimize
+          
+          $$
+          -\text{E}_{\mathbf{X}\sim \hat p_{\text{data}}} \left[\log p_{\text{model}}(\mathbf{x}) \right]
+          $$  
+          - , which is the same as the maximization above.
+  - minimizing the KL divergence corresponds exactly to minimizing the cross-entropy between the distributions.
+      - we can thus see MLE as an attempt to make the model distribution match the empirical distribution $\hat p_{\text{data}}$, in lieu of matching the true generating distribution $p_{\text{data}}$ which we do not have direct access to.
+  - Maximum likelihood = minimization of the negative log-likelihood (NLL) = minimization of cross-entropy.
+
+### **5.5.1 Conditional Log-Likelihood and Mean Squared Error**
+
+  - MLE can be generalized to the case where the goal is to estimate a conditional probability $P(\mathbf{y} \mid \mathbf{x}; \theta)$ in order to predict $\mathbf{y}$ given $\mathbf{x}$ (i.e., the supervised learning situation)
+  - let: 
+      - $\mathbf{X}$ represent the input
+      - $\mathbf{Y}$ represent the observed targets (labels)
+  - then, the conditional maximum likelihood estimator is:
+  
+  $$
+  \theta_{\text{ML}} = \arg \max_\theta P \left(\mathbf{Y} \mid \mathbf{X} ; \theta \right)
+  $$
+  
+  - if the samples are assumed to be i.i.d., then this can be decomposed:
+  
+  $$
+  \begin{align}
+  \theta_{\text{ML}}  & = \arg \max_\theta P \left(\mathbf{Y} \mid \mathbf{X} ; \theta \right) \\
+                      & = \arg \max_\theta \prod_{i=1}^m P \left(\mathbf{y}^{(i)} \mid \mathbf{x}^{(i)} ; \theta \right) && \text{examples i.i.d} \\
+                      & = \arg \max_\theta \sum_{i=1}^m \log P\left(\mathbf{y}^{(i)} \mid \mathbf{x}^{(i)} ; \theta \right) && \text{to avoid underflow}
+  \end{align}
+  $$
+
+  - **example**: Linear Regression is maximum likelihood estimation assuming Gaussian conditional distributions:
+      - think of the model producing a conditional distribution $p(y \mid \mathbf{x})$
+      - assume $p(y \mid \mathbf{x}) \mathcal{N} \left(y; \hat{y} \left(\mathbf{x}; \mathbf{w} \right), \sigma^2 \right)$ (this assumes constant $\sigma^2$)
+      
+      $$
+      \begin{align}
+      & \sum_{i=1}^m \log p\left(y^{(i)} \mid \mathbf{x}^{(i)}; \theta \right) && \substack{{\text{conditional log-likelihood,} \\{\text{assuming i.i.d examples}}}} \\
+      & \sum_{i=1}^m \log \left(\frac{1}{\sqrt{2 \sigma^2 \pi}} \exp  \frac{-\left\lVert\hat{y}^{(i)}- y^{(i)} \right\rVert^2}{2 \sigma^2} \right) && \text{def. Gaussian} \\
+      & - \sum_{i=1}^m \log \sigma - \sum_{i=1}^m \log \left(2 \pi \right)^{\frac{1}{2}} - \sum_{i=1}^m \frac{\lVert \hat{y}^{(i)} - y^{(i)}\rVert^2}{2 \sigma^2} \\
+      & - m \log \sigma - \frac{m}{2} \log \left(2 \pi \right) - \sum_{i=1}^m \frac{\lVert \hat{y}^{(i)} - y^{(i)}\rVert^2}{2 \sigma^2}
+      \end{align}
+      $$
+      - only the last term depends on the training data
+          - comparing this to MSE:
+          
+          $$
+          \text{MSE}_{\text{train}} = \frac{1}{m} \sum_{i=1}^m \left\lVert \hat{y}^{(i)} - y^{(i)}\right\rVert^2
+          $$
+        - , we see that minimizing MSE gives the same solution as maximizing the log-likelihood above
+
+### **5.5.2 Properties of Maximum Likelihood**
+
+  - main appeal of the maximum likelihood estimator:
+      - it can be shown to be the best estimator asymptotically, in terms of its rate of convergence as the number of examples $m \rightarrow \infty$
+  - under appropriate conditions, MLE has the property of consistency. Conditions:
+      - the true distribution $p_{\text{data}}$ must lie within the model family $p_{\text{model}}(\cdot ; \theta)$
+          - otherwise, no estimator can recover $p_{\text{data}}$
+      - the true distribution $p_{\text{data}}$ must correspond to exactly one value of $\theta$
+          - otherwise, MLE can recover the correct $p_{\text{data}}$, but will not be able to determine which value of $\theta$ was used by the data generating process
+  - def ***statistic efficiency***: for a fixed number of examples $m$, an estimator with greater statistic efficiency will obtain a lower generalization error than an estimator with less statistic efficiency
+      - statistical efficiency is typically studied in the *parametric* case, where the goal is to identify the true parameter (as opposed to a function)
+      - one way to measure how close we are to a true parameter is by the expected mean squared error:
+          - the squared difference between the estimated and true parameter values, where the expectation is over $m$ training examples from the data generating distribution
+          - parametric MSE decreases as $m$ increases
+          - for $m$ large, the ***Cramér-Rao bound*** shows that no consistent estimator has a lower MSE than MLE
+  - for these reasons (consistency and efficiency), MLE is often the preferred estimator for machine learning
+      - when the number of examples is small enough to yield overfitting, regularization can be used to bias MLE such that it has less variance
+      
+## **5.6 Bayesian Statistics**
+
+  - ***frequentist statistics***: estimate a single value of $\theta$, then make all predictions based on that estimate
+      - the true parameter $\theta$ is fixed but unknown
+      - the estimate $\hat{\theta}$ is a random variable (because it is a function of a random dataset)
+  - ***Bayesian statistics***: consider all possible values of $\theta$ when making a prediction
+      - use probability to reflect degrees of certainty of states of knowledge
+      - dataset is directly observed, and so is not random
+      - the true parameter $\theta$ is unknown or uncertain, and is therefore a random variable
+      - before observing data, represent knowledge of $\theta$ using the ***prior probability distribution***, $p(\theta)$ (aka ***the prior***)
+          - the prior is usually chosen to have high entropy to reflect a high degree of uncertainty in the value of $\theta$ before observing any data
+              - e.g. uniform distribution, Gaussian
+              - many priors instead reflect a preference for "simpler" solutions 
+      - consider a set of data samples $\left\{x^{(1)}, \dots, x^{(m)} \right\}$
+          - the data affects our belief about $\theta$ by combining the data likelihood $p\left(x^{(1)}, \dots, x^{(m)} \mid \theta \right)$ with the prior using Bayes' rule:
+          
+          $$
+          \begin{align}
+          p\left( \theta \mid x^{(1)}, \dots, x^{(m)} \right) & = \frac{p\left(x^{(1)}, \dots, x^{(m)} \mid \theta \right) p(\theta)}{p\left(x^{(1)}, \dots, x^{(m)}\right)} \\
+          \text{posterior} & = \text{evidence} \cdot \text{prior}
+          \end{align}
+          $$
+      - the prior usually begins as a relatively uniform or Gaussian distribution with high entropy
+          - observation of the data causes the posterior to lose entropy and concentrate around a few highly likely values of the parameters
+      - two important differences relative to maximum likelihood estimation
+          - whereas MLE makes predictions using a point estimate of $\theta$, the Bayesian approach makes predictions using a full distribution over $\theta$
+              - e.g., after observing $m$ examples, the predicted distribution over the next data sample $x^{(m+1)}$, is given by
+              
+              $$
+              p\left(x^{(m+1)} \mid x^{(1)}, \dots, x^{(m)}\right) = \int p \left(x^{m+1} \mid \theta \right) p \left(\theta \mid x^{(1)}, \dots, x^{(m)} \right)d\theta
+              $$
+              - here, each value of $\theta$ with positive probability density contributes to the prediction of the next sample, with the contribution weighted by the posterior density itself
+                  - whereas MLE addresses the uncertainty in a given point estimate of $\theta$ by evaluating its variance, the Bayesian approach deals with uncertainty in the estimator by integrating over the uncertainty
+                      - this tends to protect well against overfitting
+          - second difference: the prior has an influence by shifting probability density towards regions of the parameter space that are preferred *a priori*
+              - in practice, the prior often expresses a preference for models that are simpler or more smooth
+      - Bayesian methods typically generalize much better when training data is limited, but typically suffer from high computational cost when the number of training examples is large
+
+### **5.6.1 Maximum A Posteriori (MAP) Estimation**
+
+  - it is often desirable to have a single point estimate, even when using Bayesian methods
+      - one common reason: most operations involving the Bayesian posterior for most interesting models are intractable
+      - can still gain some of the benefit of the Bayesian approach (e.g. allowing the prior to influence the choice of point estimate)
+  - ***maximum a posteriori*** (MAP) point estimation:
+      - choose the point of maximal posterior probability/probability density:
+      
+      $$
+      \begin{align}
+      \theta_{\text{MAP}} & = \arg \max_{\theta} p (\theta \mid \mathbf{x}) \\
+                          & = \arg \max_{\theta} \log p(\mathbf{x} \mid \theta) + \log p(\theta) && \text{by Bayes' rule} \\
+                          & = \text{log-likelihood term} + \text{prior distribution term}
+      \end{align}
+      $$
+      - as with full Bayesian inference, MAP Bayesian inference has the advantage of leveraging information that is brought in by the prior and cannot be found in the training data
+          - this reduces the variance in the MAP point estimate (compared to the ML estimate), but at the cost of increased bias
+      - many regularization strategies, e.g. ML learning with weight decay, can be interpreted as making the MAP approximation to Bayesian inference
+          - this applies when the regularization consists of adding an extra term to the objective function that corresponds to $\log p(\theta)$
+          - MAP Bayesian inference provides a straightforward way to design complicated yet interpretable regularization terms
+
+## **5.7 Supervised Learning Algorithms**
+
+***supervised learning***: associate some input with some output, given a training set of example inputs $\mathbf{x}$ and outputs $\mathbf{y}$
+
+### **5.7.1 Probabilistic Supervised Learning**
+
+  - most supervised learning algorithms in this book are based on estimating $p(y \mid \mathbf{x})$
+      - this can be done simply by using ML estimation to find the best parameter vector $\theta$ for a parametric family of distributions $p(y \mid \mathbf{x}; \theta)$
+          - previously, we have seen that linear regression corresponds to the family
+          
+          $$
+          p(y \mid \mathbf{x}; \theta) = \mathcal{N} \left(y ; \theta^T\mathbf{x}, \mathbf{I} \right).
+          $$
+          - this can be generalized to the classification scenario by defining a different family of probability distributions
+              - for two-class classification, only need to specify the probability of one of the classes
+              - distributions over binary variables must always have mean between 0 and 1 (to be a valid probability)
+                  - one solution is ***logistic regression***: squash the output of the linear function into the interval (0,1) and interpret that value as a probability:
+                  
+                  $$
+                  p(y=1 \mid \mathbf{x}; \theta) = \sigma \left(\theta^T \mathbf{x} \right)
+                  $$
+                  - there is no closed form solution for the optimal weights in logistic regression
+                      - therefore, they are usually found by maximizing the log-likelihood (minimizing the negative log-likelihood) by gradient descent
+          - same strategy can be applied to essentially any supervised learning problem: write down a parametric family of conditional probability distributions over the right kind of input and output variables
+          
+### **5.7.2 Support Vector Machines**
+
+  - A discriminative model driven by a linear function $\mathbf{w}^T\mathbf{x}$. 
+      - $\mathbf{w}^T\mathbf{x} > 0 \rightarrow$ predict positive class
+      - $\mathbf{w}^T\mathbf{x} < 0 \rightarrow$ predict negative class
+
+  - The ***kernel trick***: many ML algorithms can be written exclusively in terms of dot products between examples, e.g.
+  $$
+  \mathbf{w}^T\mathbf{x} = \sum_{i=1}^m\alpha_i \mathbf{x}^T \mathbf{x}^{(i)}
+  $$
+  - here, $\mathbf{x}^{(i)}$ is a training example and $\mathbf{\alpha}$ is a vector of coefficients
+      - rewriting the learning algorithm this way allows us to replace $\mathbf{x}$ by the output of a given feature function $\phi(\mathbf{x})$ and the dot product with a ***kernel*** function $k(\mathbf{x}, \mathbf{x}^{(i)}) = \phi(\mathbf{x}) \cdot \phi(\mathbf{x}^{(i)})$
+      - analogous to the dot product case, we can make predictions using the function
+      
+      $$
+      f(\mathbf{x}) = \sum_i\alpha_i k\left(\mathbf{x}, \mathbf{x}^{(i)} \right)
+      $$
+      - this function is nonlinear with respect to $\mathbf{x}$, but the relationship between $\phi(\mathbf{x})$ and $f(\mathbf{x})$ is linear
+          - also, the relationship between $\alpha$ and $f(\mathbf{x})$ is linear
+      - the kernel-based function is exactly equivalent to preprocessing the data by applying $\phi(\mathbf{x})$ to all inputs, then learning a linear model in the new transformed space.
+  - the kernel trick is powerful for two reasons:
+      - first, it allows us to learn models that are nonlinear as a function of $\mathbf{x}$ using convex optimization techniques that are guaranteed to converge efficiently
+          - this is possible because we consider $\phi$ fixed and optimize only $\mathbf{\alpha}$, i.e., the optimization algorithm can view the decision function as being linear in a different space 
+      - second, the kernel function $k$ often admits an implementation that is significantly more computationally efficient than naively constructing two $\phi(\mathbf{x})$ vectors and explicitly taking their dot product.
+          - in some cases, $\phi(\mathbf{x})$ can even be infinite dimensional, which would result in an infinite computational cost for the naive, explicit approach 
+          - in many cases, $k(\mathbf{x}, \mathbf{x^\prime})$ is a nonlinear, tractable function of $\mathbf{X}$ even when $\phi(\mathbf{x})$ is intractable
+              - for example, construct a feature mapping $\phi(x)$ over the non-negative integers $x$
+              - suppose that this mapping returns a vector containing $x$ ones followed by infinitely many zeros
+              - the kernel function $k(x, x^{(i)}) = \min(x, x^{(i)})$ is exactly equivalent to the corresponding infinite-dimensional dot product.
+
+### **5.7.3 Other Simple Supervised Learning Algorithms**
+
+  - $k$-nearest neighbors: non-parametric algorithm for classification or regression
+      - because it is non-parametric, can achieve very high capacity
+          - however, has high computational cost and may generalize poorly to small datasets
+      - a weakness: kNN cannot learn that one feature is more discriminative than another:
+          - imagine a regression task with $\mathbf{x} \in \mathbb{R}^{100}$ drawn from an isotropic Gaussian, where only a single variable $x_1$ is relevant to the output
+              - the nearest neighbors of most points will be determined by the large number of features $x_2$ through $x_100$, not the lone feature $x_1$
+              - thus, the output on small training sets will essentially be random
+  - decision trees: see ESL Chapter 9
+
+## **5.8 Unsupervised Learning Algorithms**
+
+  - ***unsupervised learning***: experience features without labels
+      - distinction between supervised and unsupservised algorithms is not rigidly defined, because there is no objective test for distinguishing whether a value is a feature or a target
+      - informally, unsupervised learning referes to most attempts to extract information from a distributino that do not require human labor to label examples
+      - e.g.:
+          - density estimation
+          - learning to draw samples from a distribution
+          - denoising data from some distribution
+          - finding a manifold that the data lie near
+          - clustering data
+      - a classic unsupervised learning task: find the "best" representation of the data
+          - "best" generally means a representation that preserves as much information about $\mathbf{x}$ while obeying soem penalty or constraint aimed at keeping the representation *simpler* or more accessible than $\mathbf{x}$ itself
+              - three common (but not mutually exclusive) ways to define a *simpler* representation:
+                  1. lower dimensional representations
+                      - compress as much information about $x$ as possible in a smaller representation
+                  2. sparse representations
+                      - embed the dataset into a representation whose entries are mostly zeros for most inputs
+                      - typically requires increasing the dimensionality of the representation, s.t. the representation becoming mostly zeros does not discard too much information
+                      - results in an overall structure of the representation that tends to distribute data along the axes of the representation space
+                  3. independent representations
+                      - attempt to *disentangle* the sources of variation underlying the data distribution s.t. the dimensions of the representation are statistically independent
+
+### **5.8.1 Principal Components Analysis**
+
+  - an unsupervised learning algorithm that learns a lower dimensionality representation of the data such that the elements of the representation have no linear correlation with each other
+      - a first step toward the criterion of learning representations whose elements are statistically independent (full independence would also require removing nonlinear relationships)
+  - PCA learns an orthogonal, linear transformation of the data that projects an input $\mathbf{x}$ to a representation $\mathbf{z}$
+      - can be used as a simple and effective dimensionality reduction method that preserves as much of the information in the data as possible (measured by least-squares reconstruction error)
+  - how PCA decorrelates the original data representation $\mathbf{X}$:
+      - consider the $m \times n$-dimensional design matrix $\mathbf{X}$
+          - assume that the data has a mean of zero, i.e. $\text{E}[\mathbf{x}] = \mathbf{0}$
+              - if this is not the case, the data can easily be centered by subtracting the mean from all samples
+          - the unbiased sample covariance matrix associated with $\mathbf{X}$:
+          
+          $$
+          \text{Var}[\mathbf{x}] = \frac{1}{m-1} \mathbf{X}^T \mathbf{X}
+          $$
+          - PCA will find a representation (by linear transformation) $\mathbf{z} = \mathbf{x}^T \mathbf{W}$ where $\text{Var}[\mathbf{z}]$ is diagonal
+          - previously, we saw that the principal components of a design matrix $\mathbf{X}$ are given by the eigenvectors of $\mathbf{X}^T \mathbf{X}$, i.e.:
+          
+          $$
+          \mathbf{X}^T \mathbf{X} = \mathbf{W} \pmb{\Lambda} \mathbf{W}^T
+          $$
+          - an alternative derivation of the principal components by the singular value decomposition which shows that the principal components are the right singular vectors of $\mathbf{X}$:
+              - let $\mathbf{W}$ be the right singular vectors in the decomposition $\mathbf{X} = \mathbf{U} \pmb{\Sigma} \mathbf{W}^T$
+              - then recover the original eigenvector equation with $\mathbf{W}$ as the eigenvector basis:
+              
+              $$
+              \begin{align}
+              \mathbf{X}^T \mathbf{X} & = \left(\mathbf{U} \pmb{\Sigma} \mathbf{W}^T \right)^T \mathbf{U} \pmb{\Sigma} \mathbf{W}^T \\
+                                      & = \mathbf{W} \left(\mathbf{U} \pmb{\Sigma} \right)^T \mathbf{U} \pmb{\Sigma} \mathbf{W}^T   \\
+                                      & = \mathbf{W} \pmb{\Sigma}^T \mathbf{U}^T \mathbf{U} \pmb{\Sigma} \mathbf{W}^T && \mathbf{U}^T \mathbf{U} = \mathbf{I} \text{ by def of SVD} \\
+                                      & = \mathbf{W} \pmb{\Sigma}^2 \mathbf{W}^T
+              \end{align}
+              $$
+              - The SVD is helpful to show that PCA results in a diagonal $\text{Var}[\mathbf{z}]$:
+              
+              $$
+              \begin{align}
+              \text{Var}[\mathbf{x}]  & = \frac{1}{m-1} \mathbf{X}^T \mathbf{X} \\
+                                      & = \frac{1}{m-1} \mathbf{W} \pmb{\Sigma}^2 \mathbf{W}^T
+              \end{align}
+              $$
+              - If we take $\mathbf{z} = \mathbf{x}^T \mathbf{W}$, we can ensure that the covariance of $\mathbf{z}$ is diagonal as required:
+              
+              $$
+              \begin{align}
+              \text{Var}[\mathbf{z}]  & = \frac{1}{m-1} \mathbf{Z}^T \mathbf{Z} \\
+                                      & = \frac{1}{m-1} \mathbf{W}^T \mathbf{X}^T \mathbf{XW} \\
+                                      & = \frac{1}{m-1} \mathbf{W}^T \mathbf{W} \pmb{\Sigma}^2 \mathbf{W}^T \mathbf{W} \\
+                                      & = \frac{1}{m-1} \pmb{\Sigma}^2 && \mathbf{W}^T \mathbf{W} = \mathbf{I} \text{ by def. of SVD}
+              \end{align}
+              $$
+              - i.e., when we project the data $\mathbf{x}$ to $\mathbf{z}$ via the linear transformation $\mathbf{W}$, the resulting representation has a diagonal covariance matrix (given by $\pmb{\Sigma}^2$), which implies that the individual elements of $\mathbf{z}$ are mutually uncorrelated
+                  - this property means that PCA is an example of a representation that attempts to ***disentangle the unknown factors of variation*** underlying the data
+                  - disentangling feature dependencies that are more complicated require more than what can be done with a simple linear transformation
+
+
+### **5.8.2 $k$-means Clustering**
+
+  - $k$-means clustering: divide the training set into $k$ different clusters of examples that are near each other
+      - think of the algorithm as providing a $k$-dimensional one-hot code vector $\mathbf{h}$ represented an input $\mathbf{x}$
+          - if $\mathbf{x}$ belongs to cluster $i$, then $h_i = 1$ and all other entries of representation $\mathbf{h}$ are zero
+          - this is an extreme example of a sparse representation:
+              - it loses many of the benefits of a distributed representation, but still confers some statistical advantages (e.g., naturally conveys the idea that all examples in the same cluster are similar to each other)
+              - has the computational advantage that the entire representation may be captured by a single integer
+              - later, will develop more flexible sparse reprsentations where more than one entry can be non-zero for each input $\mathbf{x}$
+      - the $k$-means algorithm:
+          - intiialize $k$ centroids $\left\{\mu^{(1)}, \dots, \mu^{(k)} \right\}$ to different values
+          - alternate between:
+              - assign each training example to cluster $i$, where $i$ is the nearest centroid $\mu^{(i)}$
+              - update each centroid $\mu^{(i)}$ to the mean of all training examples $x^{j}$ assigned to cluster $i$
+      - there is no single criterion that measures how well a clustering of the data corresponds to the real world
+          - can measure certain properties such as the average Euclidean distance from a cluster centroid to the members of the clusters
+              - however, do not know how well the cluster assignments correspond to properties of the real world
+          
+
+## **5.9 Stochastic Gradient Descent**
+***Stochastic gradient descent*** (SGD)-- an extension of gradient descent that powers nearly all of deep learning.
+
+The recurring problem: large training sets are necessary for good generalization, but large training sets are also more computationally expensive.
+
+Cost functions often decompose as a sum over training examples of some per-example loss function, E.g. the negative conditional log-likelihood of the training data can be written as
+$$
+J(\mathbf{\theta}) = \text{E}_{\mathbf{X},y\sim\hat p_{\text{data}}} L(\mathbf{x},y,\mathbf{\theta}) = \frac{1}{m}\sum_{i=1}^m L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+$$
+
+where $L$ is the per-example loss $L(\mathbf{x},y,\mathbf{\theta}) = -\log p(y \mid \mathbf{x}; \mathbf{\theta})$.
+
+For these additive cost functions, gradient descent requires computing
+$$
+\nabla_{\mathbf{\theta}} J(\mathbf{\theta}) = \frac{1}{m} \sum_{i=1}^m \nabla_{\mathbf{\theta}} L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+$$
+
+. The computational cost of this operation is $O(m)$. As the training set size grows to billions of examples, the time to take a single gradient step becomes prohibitively long. The insight of stochastic gradient descent: the gradient is an expectation, which can be estimated using a small set of samples. Specifically, on each step of the algorithm, we can sample a ***minibatch*** of examples $\mathbb{B} = \left\{\mathbf{x}^{(1)}, \dots, \mathbf{x}^{(m^\prime)} \right\}$ drawn uniformly from the training set. The minibatch size $m^\prime$ is typically chosen to be a relatively small number of examples, ranging from 1 to a few hundred. Crucially, $m^\prime$ is usually held fixed as the training set size $m$ grows. We may fit a training set with billions of examples using updates computed on only a hundred examples.
+
+The estimate of the gradient is formed as
+$$
+\mathbf{g} = \frac{1}{m^\prime} \nabla_{\mathbf{\theta}} \sum_{i=1}^{m^\prime} L \left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+$$
+
+using examples from the minibatch $\mathbb{B}$. SGD then follows the estimated gradient downhill:
+$$
+\mathbf{\theta} \gets \mathbf{\theta} - \epsilon \mathbf{g}
+$$
+
+## **5.10 Building an ML algorithm**
+
+Nearly all deep learning algorithms combine specification of a ***dataset***, a ***cost function***, an ***optimization procedure***, and a ***model***.
+E.g. linear regression:
+
+  - dataset: $\mathbf{X}$ and $\mathbf{y}$
+  - cost function: $J(\mathbf{w}, b) = -\text{E}_{\mathbf{X}, y \sim \hat p_{\text{data}}} \log p_{\text{model}}\left(y \mid \mathbf{x} \right)$
+  - model: $p_{\text{model}}(y \mid \mathbf{x}) = \mathcal{N}(y; \mathbf{x}^T\mathbf{w}+b,1)$
+  - optimization algorithm: solve for zero gradient with normal equations
+  
+The cost function typically includes at least one term that causes the learning process to perform statistical estimation. The most common cost function is the negative log-likelihood (minimizing NLL = maximum likelihood estimation).
+
+The cost function may also include additional terms, such as regularization terms like weight decay (aka L2, or ridge regression).
+
+If the model is nonlinear, then the cost function usually cannot be optimized in closed form. This requires an iterative numerical optimization procedure, e.g. gradient descent.
+
+In some cases, the cost function may be a function that we cannot actually evaluate, for computational reasons. In these cases, we can still approximately minimize the function using iterative numerical optimization if we have some way of approximating its gradients.
+
+## **5.11 Challenges Motivating Deep Learning**
+
+### **5.11.1 The Curse of Dimensionality**
+
+### **5.11.2 Local Constancy and Smoothness Regularization**
+
+### **5.11.3 Manifold Learning**
