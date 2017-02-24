@@ -470,7 +470,7 @@ $(document).ready(function () {
 <ul>
 <li>imagine a regression task with <span class="math inline">\(\mathbf{x} \in \mathbb{R}^{100}\)</span> drawn from an isotropic Gaussian, where only a single variable <span class="math inline">\(x_1\)</span> is relevant to the output
 <ul>
-<li>the nearest neighbors of most points will be determined by the large number of features <span class="math inline">\(x_2\)</span> through <span class="math inline">\(x_100\)</span>, not the lone feature <span class="math inline">\(x_1\)</span></li>
+<li>the nearest neighbors of most points will be determined by the large number of features <span class="math inline">\(x_2\)</span> through <span class="math inline">\(x_{100}\)</span>, not the lone feature <span class="math inline">\(x_1\)</span></li>
 <li>thus, the output on small training sets will essentially be random</li>
 </ul></li>
 </ul></li>
@@ -484,8 +484,8 @@ $(document).ready(function () {
 <ul>
 <li><strong><em>unsupervised learning</em></strong>: experience features without labels
 <ul>
-<li>distinction between supervised and unsupservised algorithms is not rigidly defined, because there is no objective test for distinguishing whether a value is a feature or a target</li>
-<li>informally, unsupervised learning referes to most attempts to extract information from a distributino that do not require human labor to label examples</li>
+<li>distinction between supervised and unsupervised algorithms is not rigidly defined, because there is no objective test for distinguishing whether a value is a feature or a target</li>
+<li>informally, unsupervised learning refers to most attempts to extract information from a distribution that do not require human labor to label examples</li>
 <li>e.g.:
 <ul>
 <li>density estimation</li>
@@ -496,7 +496,7 @@ $(document).ready(function () {
 </ul></li>
 <li>a classic unsupervised learning task: find the “best” representation of the data
 <ul>
-<li>“best” generally means a representation that preserves as much information about <span class="math inline">\(\mathbf{x}\)</span> while obeying soem penalty or constraint aimed at keeping the representation <em>simpler</em> or more accessible than <span class="math inline">\(\mathbf{x}\)</span> itself
+<li>“best” generally means a representation that preserves as much information about <span class="math inline">\(\mathbf{x}\)</span> while obeying some penalty or constraint aimed at keeping the representation <em>simpler</em> or more accessible than <span class="math inline">\(\mathbf{x}\)</span> itself
 <ul>
 <li>three common (but not mutually exclusive) ways to define a <em>simpler</em> representation:
 <ol style="list-style-type: decimal">
@@ -607,12 +607,12 @@ $(document).ready(function () {
 <ul>
 <li>it loses many of the benefits of a distributed representation, but still confers some statistical advantages (e.g., naturally conveys the idea that all examples in the same cluster are similar to each other)</li>
 <li>has the computational advantage that the entire representation may be captured by a single integer</li>
-<li>later, will develop more flexible sparse reprsentations where more than one entry can be non-zero for each input <span class="math inline">\(\mathbf{x}\)</span></li>
+<li>later, will develop more flexible sparse representations where more than one entry can be non-zero for each input <span class="math inline">\(\mathbf{x}\)</span></li>
 </ul></li>
 </ul></li>
 <li>the <span class="math inline">\(k\)</span>-means algorithm:
 <ul>
-<li>intiialize <span class="math inline">\(k\)</span> centroids <span class="math inline">\(\left\{\mu^{(1)}, \dots, \mu^{(k)} \right\}\)</span> to different values</li>
+<li>initialize <span class="math inline">\(k\)</span> centroids <span class="math inline">\(\left\{\mu^{(1)}, \dots, \mu^{(k)} \right\}\)</span> to different values</li>
 <li>alternate between:
 <ul>
 <li>assign each training example to cluster <span class="math inline">\(i\)</span>, where <span class="math inline">\(i\)</span> is the nearest centroid <span class="math inline">\(\mu^{(i)}\)</span></li>
@@ -623,7 +623,14 @@ $(document).ready(function () {
 <ul>
 <li>can measure certain properties such as the average Euclidean distance from a cluster centroid to the members of the clusters
 <ul>
-<li>however, do not know how well the cluster assignments correspond to properties of the real world</li>
+<li>however, do not know how well the cluster assignments correspond to properties of the real world
+<ul>
+<li>example: cluster red cars, grey cars, red trucks, grey trucks</li>
+</ul></li>
+<li>because of this, we may prefer a distributed representation to a one-hot representation
+<ul>
+<li>having many attributes reduces the burden on the algorithm to guess which single attribute we care about</li>
+</ul></li>
 </ul></li>
 </ul></li>
 </ul></li>
@@ -632,22 +639,49 @@ $(document).ready(function () {
 </div>
 <div id="stochastic-gradient-descent" class="section level2">
 <h2><strong>5.9 Stochastic Gradient Descent</strong></h2>
-<p><strong><em>Stochastic gradient descent</em></strong> (SGD)– an extension of gradient descent that powers nearly all of deep learning.</p>
-<p>The recurring problem: large training sets are necessary for good generalization, but large training sets are also more computationally expensive.</p>
-<p>Cost functions often decompose as a sum over training examples of some per-example loss function, E.g. the negative conditional log-likelihood of the training data can be written as <span class="math display">\[
-J(\mathbf{\theta}) = \text{E}_{\mathbf{X},y\sim\hat p_{\text{data}}} L(\mathbf{x},y,\mathbf{\theta}) = \frac{1}{m}\sum_{i=1}^m L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
-\]</span></p>
-<p>where <span class="math inline">\(L\)</span> is the per-example loss <span class="math inline">\(L(\mathbf{x},y,\mathbf{\theta}) = -\log p(y \mid \mathbf{x}; \mathbf{\theta})\)</span>.</p>
-<p>For these additive cost functions, gradient descent requires computing <span class="math display">\[
-\nabla_{\mathbf{\theta}} J(\mathbf{\theta}) = \frac{1}{m} \sum_{i=1}^m \nabla_{\mathbf{\theta}} L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
-\]</span></p>
-<p>. The computational cost of this operation is <span class="math inline">\(O(m)\)</span>. As the training set size grows to billions of examples, the time to take a single gradient step becomes prohibitively long. The insight of stochastic gradient descent: the gradient is an expectation, which can be estimated using a small set of samples. Specifically, on each step of the algorithm, we can sample a <strong><em>minibatch</em></strong> of examples <span class="math inline">\(\mathbb{B} = \left\{\mathbf{x}^{(1)}, \dots, \mathbf{x}^{(m^\prime)} \right\}\)</span> drawn uniformly from the training set. The minibatch size <span class="math inline">\(m^\prime\)</span> is typically chosen to be a relatively small number of examples, ranging from 1 to a few hundred. Crucially, <span class="math inline">\(m^\prime\)</span> is usually held fixed as the training set size <span class="math inline">\(m\)</span> grows. We may fit a training set with billions of examples using updates computed on only a hundred examples.</p>
-<p>The estimate of the gradient is formed as <span class="math display">\[
-\mathbf{g} = \frac{1}{m^\prime} \nabla_{\mathbf{\theta}} \sum_{i=1}^{m^\prime} L \left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
-\]</span></p>
-<p>using examples from the minibatch <span class="math inline">\(\mathbb{B}\)</span>. SGD then follows the estimated gradient downhill: <span class="math display">\[
-\mathbf{\theta} \gets \mathbf{\theta} - \epsilon \mathbf{g}
-\]</span></p>
+<ul>
+<li><strong><em>Stochastic gradient descent</em></strong> (SGD): an extension of gradient descent that powers nearly all of deep learning.</li>
+<li>the recurring problem: large training sets are necessary for good generalization, but large training sets are also more computationally expensive.</li>
+<li>cost functions often decompose as a sum over training examples of some per-example loss function
+<ul>
+<li>e.g. the negative conditional log-likelihood of the training data can be written as</li>
+</ul>
+<span class="math display">\[
+  J(\mathbf{\theta}) = \text{E}_{\mathbf{X},y\sim\hat p_{\text{data}}} L(\mathbf{x},y,\mathbf{\theta}) = \frac{1}{m}\sum_{i=1}^m L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+  \]</span>
+<ul>
+<li>here <span class="math inline">\(L\)</span> is the per-example loss <span class="math inline">\(L(\mathbf{x},y,\mathbf{\theta}) = -\log p(y \mid \mathbf{x}; \mathbf{\theta})\)</span>.</li>
+</ul></li>
+<li>for these additive cost functions, gradient descent requires computing</li>
+</ul>
+<p><span class="math display">\[
+  \nabla_{\mathbf{\theta}} J(\mathbf{\theta}) = \frac{1}{m} \sum_{i=1}^m \nabla_{\mathbf{\theta}} L\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+  \]</span></p>
+<ul>
+<li>the computational cost of this operation is <span class="math inline">\(O(m)\)</span>
+<ul>
+<li>as the training set size grows to billions of examples, the time to take a single gradient step becomes prohibitively long</li>
+</ul></li>
+<li>the insight of stochastic gradient descent: the gradient is an expectation, which can be estimated using a small set of samples
+<ul>
+<li>specifically, on each step of the algorithm, we can sample a <strong><em>minibatch</em></strong> of examples <span class="math inline">\(\mathbb{B} = \left\{\mathbf{x}^{(1)}, \dots, \mathbf{x}^{\left(m^\prime \right)} \right\}\)</span> drawn uniformly from the training set</li>
+<li>minibatch size <span class="math inline">\(m^\prime\)</span> is typically chosen to be a relatively small number of examples, ranging from 1 to a few hundred
+<ul>
+<li>crucially, <span class="math inline">\(m^\prime\)</span> is usually held fixed as the training set size <span class="math inline">\(m\)</span> grows</li>
+<li>thus, we may fit a training set with billions of examples using updates computed on only a hundred examples.</li>
+</ul></li>
+</ul></li>
+<li>the estimate of the gradient is formed as</li>
+</ul>
+<p><span class="math display">\[
+  \mathbf{g} = \frac{1}{m^\prime} \nabla_{\mathbf{\theta}} \sum_{i=1}^{m^\prime} L \left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{\theta} \right)
+  \]</span></p>
+<ul>
+<li>using examples from the minibatch <span class="math inline">\(\mathbb{B}\)</span>. SGD then follows the estimated gradient downhill, with learning rate <span class="math inline">\(\epsilon\)</span>:</li>
+</ul>
+<p><span class="math display">\[
+  \mathbf{\theta} \gets \mathbf{\theta} - \epsilon \mathbf{g}
+  \]</span></p>
 </div>
 <div id="building-an-ml-algorithm" class="section level2">
 <h2><strong>5.10 Building an ML algorithm</strong></h2>
@@ -665,14 +699,159 @@ J(\mathbf{\theta}) = \text{E}_{\mathbf{X},y\sim\hat p_{\text{data}}} L(\mathbf{x
 </div>
 <div id="challenges-motivating-deep-learning" class="section level2">
 <h2><strong>5.11 Challenges Motivating Deep Learning</strong></h2>
+<ul>
+<li>traditional ML algorithms failed to generalize well on AI tasks such as speech or object recognition</li>
+<li>generalizing to new examples becomes exponentially more difficult when working with high-dimensional data
+<ul>
+<li>mechanisms used to achieve generalization in traditional ML are insufficient to learn complicated functions in high-dimensional space</li>
+<li>these spaces also often impose high computational costs</li>
+</ul></li>
+<li>hence, the motivation for deep learning:</li>
+</ul>
 <div id="the-curse-of-dimensionality" class="section level3">
 <h3><strong>5.11.1 The Curse of Dimensionality</strong></h3>
+<ul>
+<li>the <strong><em>curse of dimensionality</em></strong>: many ML problems become exceedingly difficult when the number of dimensions in the data is high (see ESL Ch. 2.5 for a more rigorous explanation)
+<ul>
+<li>of particular concern: the number of possible distinct configurations of a set of variables increases exponentially with the number of variables</li>
+</ul></li>
+</ul>
 </div>
 <div id="local-constancy-and-smoothness-regularization" class="section level3">
 <h3><strong>5.11.2 Local Constancy and Smoothness Regularization</strong></h3>
+<ul>
+<li>in order to generalize well, ML algorithms need to be guided by prior beliefs about the kind of function they should learn
+<ul>
+<li>previously, have seen these priors incorporated as explicit beliefs in the form of probability distributions over parameters of the model</li>
+<li>more informally, may also discuss prior beliefs as directly influencing the <em>function</em> itself and only indirectly acting on the parameters via their effect on the function</li>
+<li>additionally, informally discuss prior beliefs as being expressed implicitly, by choosing algorithms that are biased toward choosing some class of functions over another, even though these biases may not be expressed (or be possible to express) in terms of a probability distribution representing our degree of belief in various functions</li>
+</ul></li>
+<li>among the most widely used of the “implicit” priors: the <strong><em>smoothness/local constancy prior</em></strong>:
+<ul>
+<li>the function we learn should not change very much within a small region</li>
+<li>simple ML algorithms rely exclusively on this prior to generalize well
+<ul>
+<li>as a result, they fail to scale to the statistical challenges involved in solving AI-level tasks</li>
+<li>deep learning introduces additional (explicit and implicit) priors in order to reduce generalization error on sophisticated tasks</li>
+</ul></li>
+</ul></li>
+<li>why the smoothness prior alone is insufficient for AI-level tasks
+<ul>
+<li>there are many different ways to implicitly or explicitly express the smoothness/local constancy prior</li>
+<li><p>they all encourage the learning process to learn a function <span class="math inline">\(f^*\)</span> that satisfies the condition:</p>
+<span class="math display">\[
+f^*(\mathbf{x}) \approx f^* \left(\mathbf{x} + \epsilon \right)
+\]</span>
+<ul>
+<li>for most configurations <span class="math inline">\(\mathbf{x}\)</span> and small changes <span class="math inline">\(\epsilon\)</span>
+<ul>
+<li>i.e., if we know a good answer for an input <span class="math inline">\(\mathbf{x}\)</span>, then that answer is probably good in the neighborhood of <span class="math inline">\(\mathbf{x}\)</span>
+<ul>
+<li>if we have several good answers in some neighborhood we would combine them (by some form of averaging or interpolation) to produce an answer that agrees with as many of them as possible</li>
+</ul></li>
+</ul></li>
+<li>an extreme example of the local constancy approach: <span class="math inline">\(k\)</span>NN learning algorithms</li>
+<li>more kernel machines interpolate between training set outputs associated with nearby training examples
+<ul>
+<li>an important class of kernels: <strong><em>local kernels</em></strong>
+<ul>
+<li><span class="math inline">\(k(\mathbf{u}, \mathbf{v})\)</span> large when <span class="math inline">\(\mathbf{u} = \mathbf{v}\)</span> and decreases as <span class="math inline">\(\mathbf{u}\)</span> and <span class="math inline">\(\mathbf{v}\)</span> grow further apart from each other</li>
+<li>i.e., a similarity function performing template matching between a test example <span class="math inline">\(\mathbf{x}\)</span> and the training examples <span class="math inline">\(\mathbf{x}^{(i)}\)</span></li>
+</ul></li>
+</ul></li>
+<li>in general, local constancy methods require <span class="math inline">\(O(k)\)</span> examples to distinguish <span class="math inline">\(O(k)\)</span> regions in input space</li>
+<li>assuming local constancy will not allow a learner to represent a complex function that has many more regions to be distinguished than the number of training examples
+<ul>
+<li>e.g., imagine a checkerboard</li>
+</ul></li>
+<li>the smoothness assumption and the associated non-parametric learning algorithms work well as long as there are enough examples for the learning algorithm to observe high points on most peaks and low points in most valleys of the true function to be learned
+<ul>
+<li>this is generally true when the function is smooth enough and varies in few dimensions</li>
+<li>in high dimensions, even a very smooth function can change smoothly but in a different way along each dimension
+<ul>
+<li>additionally, if the function behaves differently in different regions, it can become extremely complicated to describe with a set of training examples</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>how to generalize well for these complicated functions
+<ul>
+<li>key insight: a very large number of regions (e.g. <span class="math inline">\(O\left(2^k\right)\)</span>), can be defined with <span class="math inline">\(O(k)\)</span> examples <em>as long as we introduce some dependencies between the regions via additional assumptions about the underlying data generating distribution</em>
+<ul>
+<li>many DL algorithms provide implicit or explicit assumptions that are reasonable for a broad range of AI tasks to capture these advantages</li>
+</ul></li>
+<li>other approaches make stronger, task-specific assumptions
+<ul>
+<li>e.g. could solve the checkerboard task by assuming the target function is periodic
+<ul>
+<li>usually, we do not include such strong, task-specific assumptions into neural networks s.t. they can generalize to a much wider variety of structures
+<ul>
+<li>AI tasks have structure too complex to be limited to simple, manually encoded properties</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>the core idea in deep learning:
+<ul>
+<li>assumption that the data was generated by the <strong><em>composition of factors/features</em></strong>, potentially at multiple hierarchical levels</li>
+<li>these mild assumptions allow an exponential gain in the relationship between the number of examples and the number of regions that can be distinguished</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
 </div>
 <div id="manifold-learning" class="section level3">
 <h3><strong>5.11.3 Manifold Learning</strong></h3>
+<ul>
+<li><strong><em>manifold</em></strong>: a connected region
+<ul>
+<li>mathematically, a set of points, associated with a neighborhood around each point</li>
+<li>from any given point, the manifold locally appears to be a Euclidean space
+<ul>
+<li>e.g. we experience the world as a 2-D plane, but it is in fact a spherical manifold in 3-D space. (“but is it really?”&quot; -flat earth society)</li>
+<li>the definition of a neighborhood around each point implies the existence of transformations that can be applied to move on the manifold from one position to a neighboring one
+<ul>
+<li>e.g. walking north, south, east, west</li>
+</ul></li>
+</ul></li>
+<li>in ML, “manifold” tends to be used more loosely to designate a connected set of points that can be approximated well by only considering a small number of degrees of freedom, or dimensions, embedded in a higher-dimensional space
+<ul>
+<li>each dimension corresponds to a local direction of variation</li>
+<li>in ML, the dimensionality of the manifold is allowed to vary from one point to another
+<ul>
+<li>this often happens when a manifold intersects itself
+<ul>
+<li>e.g. a figure eight is a 1-D manifold in most places, but 2-D at the intersection in the center</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>many ML problems seem hopeless if we expect the algorithm to learn functions with interesting variations across all of <span class="math inline">\(\mathbb{R}^n\)</span>
+<ul>
+<li><strong><em>manifold learning</em></strong> algorithms surmount this by assuming that most of <span class="math inline">\(\mathbb{R}^n\)</span> consists of invalid inputs, and that interesting variations in the output of the learned function occur only in directions that lie on the manifold, or with interesting variations happening only when moving from one manifold to another
+<ul>
+<li>the assumption that the data lie along a low-dimensional manifold may not always be correct or useful
+<ul>
+<li>it can be argued that in the context of AI tasks, such as those that involve processing images, sounds, or text, the manifold assumption is at least approximately correct
+<ul>
+<li>first argument: the probability distribution over images, text strings, and sounds that occur in real life is highly concentrated
+<ul>
+<li>uniform noise essentially never resembles structured inputs from these domains</li>
+</ul></li>
+<li>however, concentrated probability distributions are not sufficient to show that the data lies on a reasonably small number of manifolds- must also show that the examples encountered as connected to each other by other examples, with each example surrounded by other highly similar examples that may be reached by applying transformations to traverse the manifold
+<ul>
+<li>second argument: we can imagine such neighborhoods and transformations- e.g. for images, think of dimming or brightening the lights, moving or rotating objects, altering the colors on the surfaces of objects, etc.</li>
+</ul>
+<blockquote>
+<p>&quot; …the manifold of images of human faces may not be connected to the manifold of images of cat faces&quot; - lmao</p>
+</blockquote></li>
+</ul></li>
+<li>when the data lies on a low-dimensional manifold, it can be natural for machine learning algorithms to represent the data in terms of coordinates on the manifold, rather than in terms of the coordinates in <span class="math inline">\(\mathbb{R}^n\)</span>
+<ul>
+<li>extracting these manifold coordinates it challenging, but shows promise</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
 </div>
 </div>
 
