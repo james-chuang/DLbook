@@ -147,7 +147,7 @@ $(document).ready(function () {
 </ul>
 </div>
 
-<p>Part 2 of my notes on chapter 5 of the <a href="www.deeplearningbook.org">Deep Learning Book</a> on Machine Learning Basics (sections 5.5 to ).</p>
+<p>Part 2 of my notes on chapter 5 of the <a href="www.deeplearningbook.org">Deep Learning Book</a> on Machine Learning Basics (sections 5.5 to the end).</p>
 <div id="maximum-likelihood-estimation" class="section level2">
 <h2><strong>5.5 Maximum Likelihood Estimation</strong></h2>
 <ul>
@@ -223,14 +223,14 @@ $(document).ready(function () {
 <li>think of the model producing a conditional distribution <span class="math inline">\(p(y \mid \mathbf{x})\)</span></li>
 <li>assume <span class="math inline">\(p(y \mid \mathbf{x}) \mathcal{N} \left(y; \hat{y} \left(\mathbf{x}; \mathbf{w} \right), \sigma^2 \right)\)</span> (this assumes constant <span class="math inline">\(\sigma^2\)</span>)</li>
 </ul>
-<span class="math display">\[
+<p>{% raw %} <span class="math display">\[
   \begin{align}
-  &amp; \sum_{i=1}^m \log p\left(y^{(i)} \mid \mathbf{x}^{(i)}; \theta \right) &amp;&amp; \substack{{\text{conditional log-likelihood,} \\{\text{assuming i.i.d examples}}}} \\
+  &amp; \sum_{i=1}^m \log p\left(y^{(i)} \mid \mathbf{x}^{(i)}; \theta \right) &amp;&amp; \substack{{\text{conditional log-likelihood,} \\ {\text{assuming i.i.d examples}}}} \\
   &amp; \sum_{i=1}^m \log \left(\frac{1}{\sqrt{2 \sigma^2 \pi}} \exp  \frac{-\left\lVert\hat{y}^{(i)}- y^{(i)} \right\rVert^2}{2 \sigma^2} \right) &amp;&amp; \text{def. Gaussian} \\
   &amp; - \sum_{i=1}^m \log \sigma - \sum_{i=1}^m \log \left(2 \pi \right)^{\frac{1}{2}} - \sum_{i=1}^m \frac{\lVert \hat{y}^{(i)} - y^{(i)}\rVert^2}{2 \sigma^2} \\
   &amp; - m \log \sigma - \frac{m}{2} \log \left(2 \pi \right) - \sum_{i=1}^m \frac{\lVert \hat{y}^{(i)} - y^{(i)}\rVert^2}{2 \sigma^2}
   \end{align}
-  \]</span>
+  \]</span> {% endraw %}</p>
 <ul>
 <li>only the last term depends on the training data
 <ul>

@@ -68,14 +68,17 @@ Part 2 of my notes on chapter 5 of the [Deep Learning Book](www.deeplearningbook
       - think of the model producing a conditional distribution $p(y \mid \mathbf{x})$
       - assume $p(y \mid \mathbf{x}) \mathcal{N} \left(y; \hat{y} \left(\mathbf{x}; \mathbf{w} \right), \sigma^2 \right)$ (this assumes constant $\sigma^2$)
       
+      {% raw %}
       $$
       \begin{align}
-      & \sum_{i=1}^m \log p\left(y^{(i)} \mid \mathbf{x}^{(i)}; \theta \right) && \substack{{\text{conditional log-likelihood,} \\{\text{assuming i.i.d examples}}}} \\
+      & \sum_{i=1}^m \log p\left(y^{(i)} \mid \mathbf{x}^{(i)}; \theta \right) && \substack{{\text{conditional log-likelihood,} \\ {\text{assuming i.i.d examples}}}} \\
       & \sum_{i=1}^m \log \left(\frac{1}{\sqrt{2 \sigma^2 \pi}} \exp  \frac{-\left\lVert\hat{y}^{(i)}- y^{(i)} \right\rVert^2}{2 \sigma^2} \right) && \text{def. Gaussian} \\
       & - \sum_{i=1}^m \log \sigma - \sum_{i=1}^m \log \left(2 \pi \right)^{\frac{1}{2}} - \sum_{i=1}^m \frac{\lVert \hat{y}^{(i)} - y^{(i)}\rVert^2}{2 \sigma^2} \\
       & - m \log \sigma - \frac{m}{2} \log \left(2 \pi \right) - \sum_{i=1}^m \frac{\lVert \hat{y}^{(i)} - y^{(i)}\rVert^2}{2 \sigma^2}
       \end{align}
       $$
+      {% endraw %}
+      
       - only the last term depends on the training data
           - comparing this to MSE:
           
