@@ -10,8 +10,41 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+My notes on chapter 6 of the [Deep Learning Book](www.deeplearningbook.org) on Deep Feedforward Networks.
+
 ***Deep feedforward networks***, aka ***feedforward neural networks***, aka ***multi-layer perceptrons*** are the quintessential deep learning models. The goal of a feedforward network: approximate some function $f^*$.
 
+## **6.2 Gradient-Based Learning**
+
+### **6.2.1 Cost Functions**
+
+#### **6.2.1.1 Learning Conditional Distributions with Maximum Likelihood**
+
+#### **6.2.1.2 Learning Conditional Statistics**
+
+### **6.2.2 Output Units**
+
+#### **6.2.2.1 Linear Units for Gaussian Output Distributions**
+
+#### **6.2.2.2 Sigmoid Units for Bernoulli Output Distributions**
+
+#### **6.2.2.3 Softmax Units for Multinoulli Output Distributions**
+
+#### **6.2.2.4 Other Output Types**
+
+### **6.3 Hidden Units**
+
+#### **6.3.1 Rectified Linear Units and Their Generalizations**
+
+#### **6.3.2 Logistic Sigmoid and Hyperbolic Tangent**
+
+#### **6.3.3 Other Hidden Units**
+
+### **6.4 Architecture Design**
+
+#### **6.4.1 Universal Approximation Properties and Depth**
+
+#### **6.4.2 Other Architectural Considerations**
 
 ## **6.5 Back-propagation and Other Differentiation Algorithms**
 
@@ -312,3 +345,11 @@ knitr::opts_chunk$set(echo = TRUE)
               $$
               J = J_{\text{MLE}} + \lambda \left(\sum_{i,j} \left(W_{i,j}^{(1)} \right)^2 + \sum_{i,j} \left(W_{i,j}^{(2)} \right)^2 \right)
               $$
+
+### **6.5.8 Complications**
+
+### **6.5.9 Differentiation outside the Deep Learning Community**
+
+### **6.5.10 Higher-Order Derivatives**
+
+## **6.6 Historical Notes**

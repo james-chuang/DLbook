@@ -121,6 +121,12 @@ $(document).ready(function () {
 
 <div id="TOC">
 <ul>
+<li><a href="#gradient-based-learning"><strong>6.2 Gradient-Based Learning</strong></a><ul>
+<li><a href="#cost-functions"><strong>6.2.1 Cost Functions</strong></a></li>
+<li><a href="#output-units"><strong>6.2.2 Output Units</strong></a></li>
+<li><a href="#hidden-units"><strong>6.3 Hidden Units</strong></a></li>
+<li><a href="#architecture-design"><strong>6.4 Architecture Design</strong></a></li>
+</ul></li>
 <li><a href="#back-propagation-and-other-differentiation-algorithms"><strong>6.5 Back-propagation and Other Differentiation Algorithms</strong></a><ul>
 <li><a href="#computational-graphs"><strong>6.5.1 Computational Graphs</strong></a></li>
 <li><a href="#chain-rule-of-calculus"><strong>6.5.2 Chain Rule of Calculus</strong></a></li>
@@ -129,11 +135,64 @@ $(document).ready(function () {
 <li><a href="#symbol-to-symbol-derivatives"><strong>6.5.5 Symbol-to-Symbol Derivatives</strong></a></li>
 <li><a href="#general-back-propagation"><strong>6.5.6 General Back-Propagation</strong></a></li>
 <li><a href="#backprop-for-mlp-training"><strong>6.5.7 Backprop for MLP Training</strong></a></li>
+<li><a href="#complications"><strong>6.5.8 Complications</strong></a></li>
+<li><a href="#differentiation-outside-the-deep-learning-community"><strong>6.5.9 Differentiation outside the Deep Learning Community</strong></a></li>
+<li><a href="#higher-order-derivatives"><strong>6.5.10 Higher-Order Derivatives</strong></a></li>
 </ul></li>
+<li><a href="#historical-notes"><strong>6.6 Historical Notes</strong></a></li>
 </ul>
 </div>
 
+<p>My notes on chapter 6 of the <a href="www.deeplearningbook.org">Deep Learning Book</a> on Deep Feedforward Networks.</p>
 <p><strong><em>Deep feedforward networks</em></strong>, aka <strong><em>feedforward neural networks</em></strong>, aka <strong><em>multi-layer perceptrons</em></strong> are the quintessential deep learning models. The goal of a feedforward network: approximate some function <span class="math inline">\(f^*\)</span>.</p>
+<div id="gradient-based-learning" class="section level2">
+<h2><strong>6.2 Gradient-Based Learning</strong></h2>
+<div id="cost-functions" class="section level3">
+<h3><strong>6.2.1 Cost Functions</strong></h3>
+<div id="learning-conditional-distributions-with-maximum-likelihood" class="section level4">
+<h4><strong>6.2.1.1 Learning Conditional Distributions with Maximum Likelihood</strong></h4>
+</div>
+<div id="learning-conditional-statistics" class="section level4">
+<h4><strong>6.2.1.2 Learning Conditional Statistics</strong></h4>
+</div>
+</div>
+<div id="output-units" class="section level3">
+<h3><strong>6.2.2 Output Units</strong></h3>
+<div id="linear-units-for-gaussian-output-distributions" class="section level4">
+<h4><strong>6.2.2.1 Linear Units for Gaussian Output Distributions</strong></h4>
+</div>
+<div id="sigmoid-units-for-bernoulli-output-distributions" class="section level4">
+<h4><strong>6.2.2.2 Sigmoid Units for Bernoulli Output Distributions</strong></h4>
+</div>
+<div id="softmax-units-for-multinoulli-output-distributions" class="section level4">
+<h4><strong>6.2.2.3 Softmax Units for Multinoulli Output Distributions</strong></h4>
+</div>
+<div id="other-output-types" class="section level4">
+<h4><strong>6.2.2.4 Other Output Types</strong></h4>
+</div>
+</div>
+<div id="hidden-units" class="section level3">
+<h3><strong>6.3 Hidden Units</strong></h3>
+<div id="rectified-linear-units-and-their-generalizations" class="section level4">
+<h4><strong>6.3.1 Rectified Linear Units and Their Generalizations</strong></h4>
+</div>
+<div id="logistic-sigmoid-and-hyperbolic-tangent" class="section level4">
+<h4><strong>6.3.2 Logistic Sigmoid and Hyperbolic Tangent</strong></h4>
+</div>
+<div id="other-hidden-units" class="section level4">
+<h4><strong>6.3.3 Other Hidden Units</strong></h4>
+</div>
+</div>
+<div id="architecture-design" class="section level3">
+<h3><strong>6.4 Architecture Design</strong></h3>
+<div id="universal-approximation-properties-and-depth" class="section level4">
+<h4><strong>6.4.1 Universal Approximation Properties and Depth</strong></h4>
+</div>
+<div id="other-architectural-considerations" class="section level4">
+<h4><strong>6.4.2 Other Architectural Considerations</strong></h4>
+</div>
+</div>
+</div>
 <div id="back-propagation-and-other-differentiation-algorithms" class="section level2">
 <h2><strong>6.5 Back-propagation and Other Differentiation Algorithms</strong></h2>
 <ul>
@@ -613,7 +672,7 @@ $(document).ready(function () {
 <ul>
 <li><span class="math inline">\(\mathbf{X}\)</span>: a design matrix representing a minibatch of examples from the training set</li>
 <li><span class="math inline">\(\mathbf{y}\)</span>: vector of associated class labels</li>
-<li><span class="math inline">\(\mathbf{H} = \max \left\{0, \mathbf{X,W}^{(1)} \right\}\)</span>
+<li><span class="math inline">\(\mathbf{H} = \max \left\{0, \mathbf{XW}^{(1)} \right\}\)</span>
 <ul>
 <li>simplify by assuming no biases in the model</li>
 </ul></li>
@@ -634,6 +693,18 @@ $(document).ready(function () {
 </ul></li>
 </ul>
 </div>
+<div id="complications" class="section level3">
+<h3><strong>6.5.8 Complications</strong></h3>
+</div>
+<div id="differentiation-outside-the-deep-learning-community" class="section level3">
+<h3><strong>6.5.9 Differentiation outside the Deep Learning Community</strong></h3>
+</div>
+<div id="higher-order-derivatives" class="section level3">
+<h3><strong>6.5.10 Higher-Order Derivatives</strong></h3>
+</div>
+</div>
+<div id="historical-notes" class="section level2">
+<h2><strong>6.6 Historical Notes</strong></h2>
 </div>
 
 
