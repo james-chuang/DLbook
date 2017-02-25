@@ -147,22 +147,248 @@ $(document).ready(function () {
 <p><strong><em>Deep feedforward networks</em></strong>, aka <strong><em>feedforward neural networks</em></strong>, aka <strong><em>multi-layer perceptrons</em></strong> are the quintessential deep learning models. The goal of a feedforward network: approximate some function <span class="math inline">\(f^*\)</span>.</p>
 <div id="gradient-based-learning" class="section level2">
 <h2><strong>6.2 Gradient-Based Learning</strong></h2>
+<ul>
+<li>largest difference between linaer models and neural networks:
+<ul>
+<li>nonlinearity of a neural network causes most interesting loss functions to become non-convex
+<ul>
+<li>because of this, neural networks are usually trained by using iterative, gradient-based optimizers (rather than linear equation solvers/convex optimization/SVMs)</li>
+<li>convex optimization converges starting from any initial parameters (in theory–in practice is robust but can encounter numerical problems)
+<ul>
+<li>in contrast, stochastic gradient descent applied to non-convex loss functions has no such convergence guarantee, and is sensitive to the values of the initial parameters
+<ul>
+<li>for feedforward neural networks, it is important to intialize all weights to small random values</li>
+<li>biases may be initialized to zero or to small positive values</li>
+</ul></li>
+</ul></li>
+<li>the training algorithm is almost always based on using the gradient to descent the cost function in one way or another
+<ul>
+<li>the specific algorithms are usually improvements of the stochastic gradient descent algorithm</li>
+</ul></li>
+<li>gradient descent can also be used to train simpler models such as linear regression and support vector machines (common when the training set is extremely large)
+<ul>
+<li>the gradient can be obtained efficiently for a neural network using the back-propagation algorithm and its modern generalizations</li>
+</ul></li>
+<li>to apply gradient-based learning to neural networks, need to choose a <strong><em>cost function</em></strong> and an <strong><em>output representation</em></strong></li>
+</ul></li>
+</ul></li>
+</ul>
 <div id="cost-functions" class="section level3">
 <h3><strong>6.2.1 Cost Functions</strong></h3>
+<ul>
+<li>cost functions for neural networks are more or less then same as those for other parameteric models, e.g. linear models</li>
+<li>in most cases, our parametric model defines a distribution <span class="math inline">\(p(\mathbf{x} \mid \mathbf{x}; \theta)\)</span>
+<ul>
+<li>we then use the principle of maximum likelihood, resulting in the cross-entropy between the training data and the model predictions as the cost function</li>
+</ul></li>
+<li>sometimes, take a simpler approach: rather than predicting a complete probability distribution over <span class="math inline">\(\mathbf{y}\)</span>, merely predict some statistic of <span class="math inline">\(\mathbf{y}\)</span> conditioned on <span class="math inline">\(\mathbf{x}\)</span>
+<ul>
+<li>use a specialized loss function to train a predictor of these estiamtes</li>
+</ul></li>
+<li>total cost function often combines a primary cost function with a regularization term</li>
+</ul>
 <div id="learning-conditional-distributions-with-maximum-likelihood" class="section level4">
 <h4><strong>6.2.1.1 Learning Conditional Distributions with Maximum Likelihood</strong></h4>
+<ul>
+<li>most modern neural networks are trained using maximum likelihood
+<ul>
+<li>the cost function is then the negative-log likelihood, equivalently described as the cross-entropy between the training data and the model distribution:</li>
+</ul>
+<span class="math display">\[
+  J(\theta) = - \text{E}_{\mathbf{x}, \mathbf{y} \sim \hat{p}_{\text{data}}} \log p_{\text{model}} \left(\mathbf{y} \mid \mathbf{x} \right)
+  \]</span>
+<ul>
+<li>the specific form of the cost function depends on the specific form of <span class="math inline">\(\log p_{\text{model}}\)</span>
+<ul>
+<li>the expanded form typically yields some terms that do not depend on the model parameters and may be discarded</li>
+</ul></li>
+<li>advantage of deriving the cost function from maximum likelihood: removes the burden of designing cost functions for each model:
+<ul>
+<li>specifying a model <span class="math inline">\(p(\mathbf{y} \mid \mathbf{x})\)</span> automatically determines a cost function <span class="math inline">\(\log p(\mathbf{y} \mid \mathbf{x})\)</span></li>
+</ul></li>
+</ul></li>
+<li>recurring theme throughout neural network design: the gradient of the cost function must be large and predictable enough to serve as a good guide for the learning algorithm
+<ul>
+<li>functions that saturate (become very flat) undermine this objective because they make the gradient become very small
+<ul>
+<li>in many cases this happens because the activation functions used to produce the output of hidden units or output units saturate</li>
+<li>negative log-likelihood helps avoid this problem for many models:
+<ul>
+<li>many output units involve an <span class="math inline">\(\exp\)</span> function that can saturate when its argument is very negative
+<ul>
+<li>the <span class="math inline">\(\log\)</span> function in negative log-likelihood undoes the <span class="math inline">\(\exp\)</span> of some output units</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>an unusual property of the cross-entroyp cost used to perform maximum likelihood estimation: it usually does not have a minimum value when applied to the models commonly used in practice
+<ul>
+<li>for most discrete output variables, most models are parameterized in such a way that they cannot represent a probability of zero or one, but can come arbitrarily close to doing so (e.g. logistic regression)</li>
+<li>for real-valued output variables (e.g. learning the variance of a Gaussian output distribution) then it becomes possible to assign extremely high density to the correct training set outputs, resulting in cross-entropy approaching negative infinity
+<ul>
+<li>regularization is needed to avoid overfitting like this</li>
+</ul></li>
+</ul></li>
+</ul>
 </div>
 <div id="learning-conditional-statistics" class="section level4">
 <h4><strong>6.2.1.2 Learning Conditional Statistics</strong></h4>
+<ul>
+<li>instead of learning a full probability distribution <span class="math inline">\(p(\mathbf{y} \mid \mathbf{x}; \theta)\)</span>, often want to learn just one conditional statistic of <span class="math inline">\(\mathbf{y}\)</span> given <span class="math inline">\(\mathbf{x}\)</span>
+<ul>
+<li>e.g., may have a predictor <span class="math inline">\(f(\mathbf{x}; \theta)\)</span> that we wish to predict the mean of <span class="math inline">\(\mathbf{y}\)</span></li>
+</ul></li>
+<li>using a sufficiently powerful neural network, can think of the network as being able to represent any function <span class="math inline">\(f\)</span> from a wide class of functions, with this class being limited only by features such as continuity and boundedness (rather than by having a specific parametric form)
+<ul>
+<li>can view the cost function as being a <em>functional</em> rather than just a function
+<ul>
+<li><strong><em>functional</em></strong>: a mapping from functions to real numbers</li>
+<li>thus, can think of learning as choosing a function rather than merely choosing a set of parameters</li>
+<li>can design the cost functional to have its minimum occur at some specific function we desire
+<ul>
+<li>e.g., design it to have its minimum lie on the function that maps <span class="math inline">\(\mathbf{x}\)</span> to <span class="math inline">\(\text{E}[\mathbf{y} \mid \mathbf{x}]\)</span></li>
+<li>solving an optimization problem requires <strong><em>calculus of variations</em></strong>
+<ul>
+<li>two results derived from calculus of variations:
+<ol style="list-style-type: decimal">
+<li><p>solving the mean squared error optimization problem</p>
+<span class="math display">\[
+  f^* = \arg \min_f \text{E}_{\mathbf{x}, \mathbf{y} \sim p_{\text{data}}} \left\lVert \mathbf{y} -f(\mathbf{x})\right\rVert^2
+  \]</span>
+<ul>
+<li>yields</li>
+</ul>
+<span class="math display">\[
+  f^*(\mathbf{x}) = \text{E}_{\mathbf{y} \sim p_{\text{data}(\mathbf{y} \mid \mathbf{x})}} [\mathbf{y}]
+  \]</span>
+<ul>
+<li>, so long as this function lies within the class we optimize over
+<ul>
+<li>i.e., if we could train on infinitely many samples from the true data-generating distribution, minimizng the mean squared error cost function gives a function that predicts the mean of <span class="math inline">\(\mathbf{y}\)</span> for each value of <span class="math inline">\(\mathbf{x}\)</span></li>
+</ul></li>
+</ul></li>
+<li><p>solving the mean absolute error optimization problem</p>
+<p><span class="math display">\[
+  f^* = \arg \min_f \text{E}_{\mathbf{x}, \mathbf{y} \sim p_{\text{data}}} \lVert \mathbf{y} - f(\mathbf{x})\rVert_1
+  \]</span></p>
+<ul>
+<li>yields a function that predicts the <strong>median</strong> value of <span class="math inline">\(\mathbf{y}\)</span> for each <span class="math inline">\(\mathbf{x}\)</span>, so long as such a functino may be described by the family of functions we optimize over</li>
+</ul></li>
+</ol>
+<ul>
+<li>mean squared error and mean absolute error often lead to poor results when used with gradient-based optimization
+<ul>
+<li>some outputs units that saturate produce very small gradients when combined with these cost function</li>
+<li>this is one reason that the cross-entropy cost function is more popular, even when it is not necessary to estimate an entire distribution <span class="math inline">\(p(\mathbf{y} \mid \mathbf{x})\)</span></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
 </div>
 </div>
 <div id="output-units" class="section level3">
 <h3><strong>6.2.2 Output Units</strong></h3>
+<ul>
+<li>choice of cost function is tightly couple with the choice of output unit
+<ul>
+<li>most of the time, we use cross-entropy loss between the data distribution and the model distribution
+<ul>
+<li>the choice of how to represent the output then determines the form of the cross-entropy function</li>
+</ul></li>
+</ul></li>
+<li>any kind of neural network unit that may be used as an output can also be used as a hidden unit</li>
+<li>suppose that the feedforward network provides a set of hidden features defined by <span class="math inline">\(\mathbf{h} = f(\mathbf{x}; \theta)\)</span>
+<ul>
+<li>the role of the output layer is then to provide some additional transformation from the features to complete the task that the network must perform</li>
+</ul></li>
+</ul>
 <div id="linear-units-for-gaussian-output-distributions" class="section level4">
 <h4><strong>6.2.2.1 Linear Units for Gaussian Output Distributions</strong></h4>
+<ul>
+<li><strong><em>linear unit</em></strong>: output unit based on an affine transformation with no nonlinearity
+<ul>
+<li>given features <span class="math inline">\(\mathbf{h}\)</span>, a layer of linear output units produces a vector <span class="math inline">\(\hat{y} = \mathbf{W}^T \mathbf{h} + \mathbf{b}\)</span></li>
+<li>often used to produce the mean of a conditional Gaussian distribution:</li>
+</ul>
+<span class="math display">\[
+  p(\mathbf{y} \mid \mathbf{x}) = \mathcal{N} \left(\mathbf{y}; \hat{\mathbf{y}}, \mathbf{I} \right)
+  \]</span>
+<ul>
+<li>maximizing the log-likelihood is then equivalent to minimizing the mean squared error</li>
+<li>max likelihood makes it straightforward to learn the covariance of the Gaussian, or to make the covariance of the Gaussian be a function of the input
+<ul>
+<li>however, covariace must be constrained to be a positive definite matrix for all inputs
+<ul>
+<li>difficult to satisfy such constraints with a linear output layer, so typically other output units are used to parameterize the covariance</li>
+</ul></li>
+</ul></li>
+<li>linear units do not saturate, so they pose little difficulty for gradient-based optimization algorithms</li>
+</ul></li>
+</ul>
 </div>
 <div id="sigmoid-units-for-bernoulli-output-distributions" class="section level4">
 <h4><strong>6.2.2.2 Sigmoid Units for Bernoulli Output Distributions</strong></h4>
+<ul>
+<li>many tasks require predicting the value of a binar variable <span class="math inline">\(y\)</span>, esp. two-class classification
+<ul>
+<li>the max likelihood approach: define a Bernoulli distribution over <span class="math inline">\(y\)</span> conditioned <span class="math inline">\(\mathbf{x}\)</span>
+<ul>
+<li>neural net only needs to predict <span class="math inline">\(P(y=1 \mid \mathbf{x}) \in [0,1]\)</span>
+<ul>
+<li>could be satisfied with a thresholded linear unit, but this couldn’t be trained effectively with gradient descent (the gradient is zero outside the unit interval)</li>
+<li>a better approach which ensures that there is always a strong gradient whenever the model has the wrong answer:
+<ul>
+<li>based on sigmoid output units combined with maximum likelihood
+<ul>
+<li><strong><em>sigmoid output unit</em></strong>:</li>
+</ul>
+<span class="math display">\[
+  \hat{y} = \sigma \left(\mathbf{w}^T \mathbf{h} + b \right)
+  \]</span>
+<ul>
+<li>sigmoid output unit has two components: first, uses a linear layer to compute <span class="math inline">\(z = \mathbf{w}^T \mathbf{h} + b\)</span>; then uses sigmoid activation function to convert <span class="math inline">\(z\)</span> to a probability</li>
+<li>how to define a probability distribution over <span class="math inline">\(y\)</span> using the value <span class="math inline">\(z\)</span>:
+<ul>
+<li>the sigmoid can be motivated by constructing an unnormalized probability distribution <span class="math inline">\(\tilde{P}(y)\)</span>, then divide by an appropriate constant to obtain a valid probabilty distribution
+<ul>
+<li>begin with the assumption that the unnormalized log probabilities are linear in <span class="math inline">\(y\)</span> and <span class="math inline">\(z\)</span>:</li>
+</ul>
+<span class="math display">\[
+  \begin{align}
+  \log  \hat{P}(y)  &amp; = yz       \\
+        \hat{P}(y)  &amp; = \exp(yz) \\
+        P(y)        &amp; = \frac{\exp(yz)}{\sum_{y^{\prime} = 0}^1 \exp \left(y^\prime z \right)} \\
+        P(y)        &amp; = \sigma \left(\left(2y-1 \right) z \right) &amp;&amp; \text{I think this only holds because } y \in \{0,1 \}?
+  \end{align}
+  \]</span>
+<ul>
+<li><span class="math inline">\(z\)</span> variable defining such a distribution over binary variables is the <strong><em>logit</em></strong></li>
+<li>this approach to predicting the probabilities in log-space is natural to use with maximum likelihood learning
+<ul>
+<li>because the cost function used with max likelihood is <span class="math inline">\(-\log P(y \mid \mathbf{x})\)</span>, the in the cost function undoes the <span class="math inline">\(\exp\)</span> of the sigmoid
+<ul>
+<li>this keeps the saturation of the sigmoid from preventing gradient-based learning from making progress</li>
+</ul></li>
+<li>the loss function for maximum likelihood learning of a Bernoulli parameterized by a sigmoid:</li>
+</ul>
+<span class="math display">\[
+  \begin{align}
+  J(\theta) &amp; = - \log P(y \mid \mathbf{x}) \\
+            &amp; = - \log \sigma \left(\left(2y-1 \right) z \right) \\
+            &amp; = \zeta \left(\left(1-2y \right)z \right)
+  \end{align}
+  \]</span></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
 </div>
 <div id="softmax-units-for-multinoulli-output-distributions" class="section level4">
 <h4><strong>6.2.2.3 Softmax Units for Multinoulli Output Distributions</strong></h4>
