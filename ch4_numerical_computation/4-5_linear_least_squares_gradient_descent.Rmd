@@ -1,28 +1,43 @@
 ---
+title: "Least squares regression by gradient descent"
+author: James Chuang
+date: December 22, 2016
+mainfont: FreeSans
+linkcolor: "purple"
 output:
-  html_document:
-    fig_width: 8
-    css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
+    pdf_document:
+        latex_engine: xelatex
+        toc: true
+        number_sections: false
+        fig_width: 8
+        df_print: tibble
+  # html_document:
+  #   fig_width: 8
+  #   css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
 ---
+
+```{r setup,include=FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
 
 In this post I explore the gradient descent algorithm as a solution to least squares minimization, inspired by section 4.5 of the [Deep Learning Book](http://www.deeplearningbook.org/).
 
 Suppose we want to find the value of $\mathbf{x}$ that minimizes the squared error loss function $f(\mathbf{x})$.
 $$
-\begin{align}
+\begin{aligned}
 f(\mathbf{x}) & = \lVert \mathbf{Ax} - \mathbf{b} \rVert_2^2 \\
 f(\mathbf{x}) & = \left(\mathbf{Ax} - \mathbf{b} \right)^T \left(\mathbf{Ax} - \mathbf{b} \right) \\
-\end{align}
+\end{aligned}
 $$
 
 The toy motivation for this could be to perform simple (univariate) linear regression on some data set. In this case, the matrix $\mathbf{A}$ is an $N \times (p+1)$ matrix representing $N$ training examples with $p$ input variables, with a leading column of ones to allow for an intercept. The vector $\mathbf{b}$ is an $N$-vector of the training outputs, and $\mathbf{x}$ is a $(p+1)$ vector representing the linear model's slope and intercept which we want to solve for. The function $f(\mathbf{x})$ above is the squared error loss, which we will use to determine how poorly a line parameterized by the slope and intercept of a particular $\mathbf{x}$ fits the training data. If we can find the value of $\mathbf{x}$ which minimizes the squared error loss $f(\mathbf{x})$, then we will have found the line which best fits the training data (the best line is the 'least bad' line, i.e. it has the least error).
 
 In order to minimize $f(\mathbf{x})$, we find the gradient:
 $$
-\begin{align}
+\begin{aligned}
 \nabla_{\mathbf{x}}f(\mathbf{x}) & = \mathbf{A}^T(\mathbf{Ax}-\mathbf{b}) \\
 \nabla_{\mathbf{x}}f(\mathbf{x}) & = \mathbf{A}^T\mathbf{Ax}-\mathbf{A}^T\mathbf{b}
-\end{align}
+\end{aligned}
 $$
 Ordinarily, we would now set $\nabla_{\mathbf{x}}f(\mathbf{x}) = 0$, and then solve for $\mathbf{x}$. However, since I'm solving this by gradient descent, here the gradient acts as a guide pointing in the direction which $f(\mathbf{x})$ increases most sharply. Therefore, we can find the minimum of $f(\mathbf{x})$ by walking in small steps in the opposite direction of the gradient (hence the name, 'gradient descent').
 
@@ -33,7 +48,7 @@ Minimization of $f(\mathbf{x})$ by gradient descent in pseudocode:
         - $\mathbf{x} \gets \mathbf{x}- \epsilon(\mathbf{A}^T\mathbf{Ax}-\mathbf{A}^T\mathbf{b})$
 
 First, I generate linearly related training data with Gaussian noise and find the linear fit by ordinary least squares (this is a positive control for this experiment).
-```{r, fig.align='center', fig.cap='Linear fit by ordinary least squares. If gradient descent is any good, it should find a line close to the red line.'}
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.cap='Linear fit by ordinary least squares. If gradient descent is any good, it should find a line close to the red line.'}
 library(tibble)
 library(ggplot2)
 library(viridis)
@@ -71,14 +86,23 @@ error = function(A,x,b){
 
 #gradient descent function
 grad.desc = function(A, b, eps, delta, x){
-  grad.desc.data = data_frame(epoch=numeric(), x.old=double(), y.old=double(), x.new=double(), y.new=double(), error.old=double(), error.new=double())
+  grad.desc.data = data_frame(epoch=numeric(),
+                              x.old=double(),
+                              y.old=double(),
+                              x.new=double(),
+                              y.new=double(),
+                              error.old=double(),
+                              error.new=double())
   
   epoch = 1
   err = error(A,x,b)
   
   while (err>delta){
     #uncomment below to get live output
-    #print(paste("epoch: ", epoch, "; error: ", round(err, digits=6), "x: ", round(x[1], digits=3), ",",round(x[2], digits=3)))
+    #print(paste("epoch: ", epoch, 
+                 # "; error: ", round(err, digits=6),
+                 # "x: ", round(x[1], digits=3),
+                 # ",",round(x[2], digits=3)))
     
     grad.desc.data[epoch,1] = epoch
     grad.desc.data[epoch,2] = x[1]
@@ -128,7 +152,8 @@ names(x.lm) = c("V1","V2")
         geom_raster(data= grid.error, aes(x=Var1, y=Var2, fill=error.vector), interpolate = TRUE) +
         geom_contour(data= grid.error, aes(x=Var1, y=Var2, z=error.vector), color="white") +
         geom_point(data= x.lm, aes(x=V1, y=V2), shape=4, color="white") +
-        geom_segment(data= grad.desc.data, aes(x=x.old, y=y.old, xend=x.new, yend=y.new, color=even.odd)) +
+        geom_segment(data= grad.desc.data,
+                     aes(x=x.old, y=y.old, xend=x.new, yend=y.new, color=even.odd)) +
         scale_x_continuous(limits = c(7.75,10.5)) +
         scale_fill_viridis() +
         scale_color_manual(values = c("orange","yellow")) +
@@ -145,8 +170,10 @@ Above, we see gradient descent in action as plotted in parameter space, where th
 (lm.plot = ggplot() +
             geom_point(data=data.frame(data), aes(x=X1, y=X2)) +
             #geom_abline(slope=2, intercept=10) + #generating line
-            #geom_smooth(data=data.frame(data), aes(x=X1, y=X2), method = lm) + #least squares analytical soln
-            geom_abline(data=grad.desc.data, aes(intercept=x.old, slope=y.old, color=epoch, alpha=1/epoch)) +
+            #least squares analytical soln
+            #geom_smooth(data=data.frame(data), aes(x=X1, y=X2), method = lm) + 
+            geom_abline(data=grad.desc.data,
+                        aes(intercept=x.old, slope=y.old, color=epoch, alpha=1/epoch)) +
             scale_alpha(guide='none') +
             scale_color_viridis(option="inferno")
 )

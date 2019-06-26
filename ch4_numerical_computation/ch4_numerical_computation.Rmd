@@ -1,9 +1,33 @@
 ---
+title: "Deep learning book Ch. 4- Numerical computation notes"
+author: James Chuang
+date: February 3, 2017
+mainfont: FreeSans
+linkcolor: "purple"
+header-includes:
+    \usepackage{enumitem}
+    \setlistdepth{9}
+    \setlist[itemize,1]{label=$\bullet$}
+    \setlist[itemize,2]{label=$\bullet$}
+    \setlist[itemize,3]{label=$\bullet$}
+    \setlist[itemize,4]{label=$\bullet$}
+    \setlist[itemize,5]{label=$\bullet$}
+    \setlist[itemize,6]{label=$\bullet$}
+    \setlist[itemize,7]{label=$\bullet$}
+    \setlist[itemize,8]{label=$\bullet$}
+    \setlist[itemize,9]{label=$\bullet$}
+    \renewlist{itemize}{itemize}{9}
 output:
-  html_document:
-    toc: TRUE
-    fig_width: 4.5
-    css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
+    pdf_document:
+        latex_engine: xelatex
+        toc: true
+        number_sections: false
+        fig_width: 4.5
+        df_print: tibble
+  # html_document:
+  #   toc: TRUE
+  #   fig_width: 4.5
+  #   css: /home/ebosi/github/james-chuang.github.io/_sass/_style.scss
 ---
 
 ```{r setup, include=FALSE}
@@ -28,13 +52,13 @@ $$
 $$
 Analytically, when all of the $x_i$ are equal to a constant $c$, all of the outputs should be $\frac{1}{n}$. Numerically, this may not occur when $c$ has large magnitude. For very negative $c$, $\exp(c)$ will underflow, causing the denominator to become $0$, and making the output undefined. For very positive $c$, $\exp(c)$ will overflow, again making the output undefined. Both of these difficulties can be resolved by instead evaluating $\text{softmax}(Z)$, where $Z = X- \max_i{x_i}$. The value of the softmax function is not changed analytically by adding or subtracting a scalar from the input vector:
 $$
-\begin{align}
+\begin{aligned}
 \text{softmax}(Z)_i & = \frac{\exp(x_i- \max_i{x_i})}{\sum_{j=1}^n \exp(x_j-\max_i{x_i})} \\
                     & = \frac{\frac{\exp(x_i)}{\exp(\max_i{x_i})}}{\sum_{j=1}^n{\frac{\exp(x_j)}{\exp(\max_i x_i)}}} \\
                     & = \frac{\frac{\exp(x_i)}{\exp(\max_i{x_i})}}  { \frac{\sum_{j=1}^n \exp(x_j)}{\exp(\max_i x_i)}} \\
                     & = \frac{\exp(x_i)}{\sum_{j=1}^n \exp(x_j)} \\
-\text{softmax}(Z)_i & = \text{softmax}(X)_i 
-\end{align}
+\text{softmax}(Z)_i & = \text{softmax}(X)_i
+\end{aligned}
 $$
 
 Subtracting $\max_i{x_i}$ makes the largest argument to $\exp$ be $0$, which protects against overflow. Likewise, at least one term in the denominator has a value of $1$, protecting against underflow in the denominator and subsequent division by zero. However, underflow in the numerator can still cause the expression to erroneously evaluate to zero. Then, taking $\log{\text{softmax}(x)}$ would erroneously return $-\infty$. This can be stabilized using the same trick used to stabilize the softmax function above.
@@ -76,15 +100,15 @@ How to set the learning rate $\epsilon$?
   - popular approach is to set $\epsilon$ to a small constant
   - or, solve for step size that makes directional derivative zero
   - or, ***line search***: evaluate $f(\mathbf{x} - \epsilon \nabla_{\mathbf{x}}f(\mathbf{x}))$ for several values of $\epsilon$ and choose the one that results in the smallest objective function value
-  
+
 Steepest descent converges when $\nabla_{\mathbf{x}}f(\mathbf{x}) = 0$
 
   - in cases where there is an analytical solution, this point can be jumped to directly
-  
+
 Gradient descent is limited to optimization in continuous spaces
 
   - the concept of making small moves towards better configurations can be generalized to discrete spaces (this is called ***hill climbing***)
-  
+
 ### **DL 4.3.1 Jacobian and Hessian Matrices**
 
 Sometimes need the partial derivatives of a function $f: \mathbb{R}^m \to \mathbb{R}^n$.
@@ -93,14 +117,14 @@ Sometimes need the partial derivatives of a function $f: \mathbb{R}^m \to \mathb
 $$
 J \in \mathbb{R}^{n \times m}, \quad J_{i,j} = \frac{\partial}{\partial x_j} f(x)_i
 $$
- 
+
 second derivatives indicate *curvature*
 
   - important because it tells us whether a gradient step will cause as much of an improvement as we would expect based on the gradient alone
   - $f^{\prime \prime}(x) = 0$: no curvature, value can be predicted using only the gradient
   - $f^{\prime \prime}(x) < 0$: function curves downward, so cost function decreases by more than $\epsilon$
   - $f^{\prime \prime}(x) > 0$: function curves upward, so cost function decreases by less than $\epsilon$
-    
+
 **Hessian matrix**: $\mathbf{H}\left(f \left(\mathbf{x} \right) \right)$ the matrix of all second derivatives
 $$
 H(f(\mathbf{x}))_{i,j} = \frac{\partial^2}{\partial x_i \partial x_j} f(\mathbf{x})
@@ -115,7 +139,7 @@ Anywhere that the second partial derivatives are continuous, $\frac{\partial^2}{
           - for other directions, the second derivative is a weighted average of all of the eigenvalues, with weights between 0 and 1
           - max eigenvalue $\rightarrow$ max second derivative
           - min eigenvalue $\rightarrow$ min second derivative
-          
+
 The directional second derivative measures how well a gradient descent step is expected to perform. The second order Taylor series approximation of the function $f(\mathbf{x})$ about the current point $\mathbf{x}^{(0)}$:
 
 $$
@@ -124,14 +148,14 @@ $$
 Using gradient descent, the new point $\mathbf{x} = \mathbf{x}^{(0)} - \epsilon \nabla_x \left( f(\mathbf{x}^{(0)})\right)$. Substituting this in:
 
 $$
-\begin{align}
+\begin{aligned}
 f(\mathbf{x})                                           & \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}-\mathbf{x}^{(0)} \right)^T \mathbf{g} + \frac{1}{2} \left(\mathbf{x}-\mathbf{x}^{(0)} \right)^T \mathbf{H} \left(\mathbf{x}-\mathbf{x}^{(0)} \right) \\
 f \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} \right)  & \approx f\left(\mathbf{x}^{(0)}\right) + \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} -\mathbf{x}^{(0)} \right)^T \mathbf{g} + \frac{1}{2} \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} -\mathbf{x}^{(0)} \right)^T \mathbf{H} \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} -\mathbf{x}^{(0)} \right) \\
 f \left(\mathbf{x}^{(0)} - \epsilon \mathbf{g} \right)  & \approx f\left(\mathbf{x}^{(0)}\right) - \epsilon \mathbf{g}^T  \mathbf{g} + \frac{1}{2} \epsilon^2 \mathbf{g}^T \mathbf{H} \mathbf{g} \\
 \text{new value of } f & \approx \text{original value } - \text{expected improvement due to slope } + \text{correction for curvature}
-\end{align}
+\end{aligned}
 $$
-  
+
   - $\mathbf{g}^T \mathbf{Hg}$ very positive $\rightarrow$ gradient descent step can actually move uphill
   - $\mathbf{g}^T \mathbf{Hg}$ zero or negative $\rightarrow$ Taylor series approx. predicts that $\epsilon \rightarrow \infty$ will decrease $f$ infinitely
       - in practice, must then resort to heuristic choices of $\epsilon$
@@ -142,7 +166,7 @@ $$
       - worst case: $\mathbf{g}$ aligns with the eigenvector of $\mathbf{H}$ corresponding to the maximal eigenvalue $\lambda_{\text{max}}$
           - then, optimal step size $= \frac{1}{\lambda_{\text{max}}}$
           - thus, to the extent that the function we minimize can be approximated well by a quadratic function, the eigenvalues of the Hessian determine the scale of the learning rate
-          
+
   - ***second derivative test***: determine whether a critical point is a local maximum, local minimum, or saddle point
       - at critical points, $f^{\prime}(x)=0$
           - if $f^{\prime \prime}(x) > 0$, $f^{\prime}(x)$ increases to the right, and $f^{\prime}(x)$ decreases to the left
@@ -153,7 +177,7 @@ $$
               - $x$ may be a saddle point, or part of a flat region
   - using the eigendecomposition of the Hessian matrix, the second derivative test can be generalized to multiple dimensions
       - at critical points, $\nabla_{\mathbf{x}}f(\mathbf{x}) = 0$
-          - if Hessian is **positive definite** $\rightarrow$ all eigenvalues positive $\rightarrow$ directional second derivative in any direction is positive $\rightarrow$ $x$ is a **local minimum** 
+          - if Hessian is **positive definite** $\rightarrow$ all eigenvalues positive $\rightarrow$ directional second derivative in any direction is positive $\rightarrow$ $x$ is a **local minimum**
           - if Hessian is **negative definite** $\rightarrow$ all eigenvalues negative $\rightarrow$ directional second derivative in any direction is negative $\rightarrow$ $x$ is a **local maximum**
           - if Hessian has **at least one positive eigenvalue and one negative eigenvalue**, $x$ is a local max in at least one dimension and a local min in at least one dimension, and therefore is a **saddle point**
           - if **all non-zero eigenvalues have the same sign, but at least one eigenvalue is zero, the test is inconclusive** because the univariate second derivative test is inconclusive in the cross section corresponding to the zero eigenvalue
@@ -182,7 +206,7 @@ $$
               - in contrast, gradient descent is not attracted to saddle points unless the gradient points toward them
   - gradient descent is a ***first order optimization algorithm***
   - methods such as the Newton-Raphson method that take the Hessian into account are called ***second order optimization algorithms***
-  
+
 Optimization algorithms come with almost no guarantees, because the family of functions encountered is very complicated
 
   - in deep learning, can sometimes gain some guarantees by restricting to functions that are ***Lipschitz continuous*** or have Lipschitz continuous derivatives
@@ -203,7 +227,7 @@ The most successful field of specialized optimization is ***convex optimization*
               - all local minima are necessarily global minima
       - most problems in deep learning are difficult to express in terms of convex optimization
           - used only as a subroutine of some DL algorithms
-          
+
 ## **DL 4.4 Constrained Optimization**
 
   - ***constrained optimization***: optimizing $f(\mathbf{x})$ for values of $x$ in some set $\mathbb{S}$
@@ -214,7 +238,7 @@ The most successful field of specialized optimization is ***convex optimization*
       - design a different, unconstrained optimization problem whose solution can be converted into a solution to the original, constrained optimization problem
       - do this by introducing a new function- the ***generalized Lagrangian*** or ***generalized Lagrange function***
           - first, describe $\mathbb{S}$ in terms of $m$ functions $g^{(i)}$ and $n$ functions $h^{(j)}$ such that
-          
+
           $$
           \mathbb{S} = \left\{\mathbf{x} \mid \begin{aligned}
                                               & \forall i, g^{(i)} (\mathbf{x}) = 0     && \text{equality constraints}\\
@@ -238,7 +262,7 @@ The most successful field of specialized optimization is ***convex optimization*
           $$
            \max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) = f(x).
           $$
-          This means that 
+          This means that
           $$
           \min_{\mathbf{x}}\max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) = \min_{\mathbf{x}\in \mathbb{S}} f(\mathbf{x}),
           $$
@@ -248,7 +272,7 @@ The most successful field of specialized optimization is ***convex optimization*
               - if a constraint is not active, then the solution to the problem using that constraint would remain at least a local solution if that constraint were removed
               - because an inactive $h^{(i)}$ has a negative value, the solution to
               $$
-              \min_{\mathbf{x}}\max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha) 
+              \min_{\mathbf{x}}\max_{\lambda, \alpha, \alpha \geq 0} L(\mathbf{x}, \lambda, \alpha)
               $$
               will have $\alpha_i = 0$
                   - thus, $\alpha \mathbf{h}(\mathbf{x}) = 0$
@@ -258,7 +282,7 @@ The most successful field of specialized optimization is ***convex optimization*
           - the gradient of the generalized Lagrangian is zero
           - all constraints on both $x$ and the KKT multipliers are satisfied
           - $\alpha \odot \mathbf{h}(\mathbf{x}) = \mathbf{0}$
-          
+
 ## **DL 4.5 Example: Linear Least Squares**
 
 Minimize the squared error loss function
@@ -270,14 +294,14 @@ This can be analytically solved by taking the gradient and setting it to zero, s
 
 Finding the gradient:
 $$
-\begin{align}
+\begin{aligned}
 f(\mathbf{x}) & = \frac{1}{2} \lVert \mathbf{Ax}- \mathbf{b} \rVert_2^2 \\
               & = \frac{1}{2} \left(\mathbf{Ax}- \mathbf{b} \right)^T \left( \mathbf{Ax}- \mathbf{b} \right) \\
               & = \frac{1}{2} \left[\left(\mathbf{Ax} \right)^T \left(\mathbf{Ax} \right) - \left(\mathbf{Ax} \right)^T\mathbf{b} - \mathbf{b}^T \left(\mathbf{Ax} \right) + \mathbf{b}^T\mathbf{b}  \right] \\
               & = \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] \\
 \nabla_{\mathbf{x}} f(\mathbf{x}) & = \frac{1}{2} \left[2 \mathbf{A}^T\mathbf{Ax} - 2 \mathbf{A}^T \mathbf{b}\right] \\
                                   & = \mathbf{A}^T\mathbf{Ax} - \mathbf{A}^T \mathbf{b}
-\end{align}
+\end{aligned}
 $$
 
 Pseudocode for minimization by gradient descent:
@@ -300,25 +324,25 @@ $$
 The smallest-norm solution to this unconstrained least squares problem may be found using the Moore-Penrose pseudoinverse $\mathbf{x} = \mathbf{A}^+ \mathbf{b}$. If this point is feasible, then it is the solution to the constrained problem. Otherwise, we must find a solution where the constraint is active. Start by differentiating the Lagrangian w.r.t. $\mathbf{x}$ and setting it equal to the zero vector:
 
 $$
-\begin{align}
+\begin{aligned}
 L(\mathbf{x}, \lambda)  & = f(\mathbf{x}) + \lambda \left(\mathbf{x}^T \mathbf{x} -1 \right) \\
                         & = \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] + \lambda \mathbf{x}^T \mathbf{x} - \lambda \\
 \nabla_{\mathbf{x}} L(\mathbf{x}, \lambda) & = \frac{1}{2} \left[2 \mathbf{A}^T \mathbf{Ax} -2 \mathbf{A}^T\mathbf{b}\right] + \lambda \mathbf{x} = 0 \\
 \mathbf{A}^T \mathbf{Ax} - \mathbf{A}^T\mathbf{b} + 2 \lambda \mathbf{x} &= 0 \\
 \left(\mathbf{A}^T\mathbf{x}+ 2 \lambda \mathbf{I} \right)\mathbf{x} & = \mathbf{A}^T \mathbf{b} \\
 \mathbf{x} & = \left(\mathbf{A}^T\mathbf{x}+ 2 \lambda \mathbf{I} \right)^{-1} \mathbf{A}^T \mathbf{b}
-\end{align}
+\end{aligned}
 $$
 
 The solution must take the above form, and the magnitude of $\lambda$ must be chosen such that the result obeys the constraint (i.e., $\mathbf{x}^T \mathbf{x} \leq 1$). Value can be found by performing gradient ascent on $\lambda$:
 $$
-\begin{align}
+\begin{aligned}
 L(\mathbf{x}, \lambda) &= \frac{1}{2} \left[\mathbf{x}^T \mathbf{A}^T\mathbf{Ax} - 2\mathbf{x}^T\mathbf{A}^T \mathbf{b} +  \mathbf{b}^T\mathbf{b}\right] + \lambda \mathbf{x}^T \mathbf{x} - \lambda \\
 \frac{\partial}{\partial \lambda} L \left(\mathbf{x}, \lambda \right) & = \mathbf{x}^T \mathbf{x} - 1 \\
 \\
-& 
+&
 \text{if} \quad \mathbf{x}^T \mathbf{x} > 1 \quad\rightarrow  \quad \frac{\partial L}{\partial \lambda} > 0 \quad \rightarrow \text{gradient ascent increases } \lambda
-\end{align}
+\end{aligned}
 $$
 
 An increased $\lambda$ means the weight of the $\mathbf{x}^T \mathbf{x}$ penalty in the Lagrangian has increased. Therefore, solving for $\mathbf{x}$ will then yield a solution with a smaller norm. The process of solving the linear equation and adjusting $\lambda$ continues until $\mathbf{x}$ has the correct norm and the derivative on $\lambda$ is 0.
